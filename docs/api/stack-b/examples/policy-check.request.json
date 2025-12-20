@@ -1,4 +1,25 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "auth": {
+    "tenant_id": "tnt_demo",
+    "principal": {
+      "principal_id": "svc_stack_a",
+      "principal_type": "service"
+    },
+    "scopes": [
+      "policy:check"
+    ],
+    "policy_context": {
+      "data_classification": "internal",
+      "region": "us-west-2",
+      "purpose": "agent_run"
+    }
+  },
+  "policy_check": {
+    "request_id": "req_...",
+    "content": {
+      "type": "text",
+      "text": "User input that might contain sensitive data..."
+    },
+    "ruleset": "pol_default"
+  }
 }

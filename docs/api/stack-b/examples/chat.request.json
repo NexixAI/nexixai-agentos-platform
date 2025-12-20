@@ -1,4 +1,63 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "auth": {
+    "tenant_id": "tnt_demo",
+    "principal": {
+      "principal_id": "svc_stack_a",
+      "principal_type": "service"
+    },
+    "scopes": [
+      "models:invoke"
+    ],
+    "policy_context": {
+      "data_classification": "internal",
+      "region": "us-west-2",
+      "purpose": "agent_run"
+    }
+  },
+  "request": {
+    "request_id": "req_01JH9Y0Q9K7PZJH1K8M9N0P2Q3",
+    "operation": "chat",
+    "model_ref": "tier:balanced",
+    "requirements": {
+      "max_latency_ms": 2500,
+      "max_cost_usd": 0.05,
+      "min_context_tokens": 0
+    },
+    "input": {
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant."
+        },
+        {
+          "role": "user",
+          "content": "Draft an action list from this summary..."
+        }
+      ],
+      "tools": [
+        {
+          "tool_id": "tool.sql.query",
+          "name": "sql_query",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ]
+          }
+        }
+      ],
+      "tool_choice": "auto"
+    },
+    "generation": {
+      "temperature": 0.2,
+      "top_p": 0.9,
+      "max_output_tokens": 600
+    }
+  },
+  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 }

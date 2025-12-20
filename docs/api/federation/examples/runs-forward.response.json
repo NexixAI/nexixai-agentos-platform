@@ -1,4 +1,10 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "forwarded": {
+    "tenant_id": "tnt_demo",
+    "remote_stack_id": "stk_usw2_node_02",
+    "remote_run_id": "run_01JH9YZZZZZZZZZZZZZZZZZZZZ",
+    "remote_events_url": "https://node02.dev.nexixai.local/v1/runs/run_01JH9YZZZZZZZZZZZZZZZZZZZZ/events",
+    "status": "queued"
+  },
+  "correlation_id": "corr_..."
 }

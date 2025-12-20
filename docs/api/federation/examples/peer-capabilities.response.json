@@ -1,4 +1,26 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "capabilities": {
+    "supports": {
+      "runs_forward": true,
+      "events_stream": true,
+      "tenant_isolation": true,
+      "tool_hosting": false
+    },
+    "limits": {
+      "max_concurrent_runs": 200,
+      "max_event_streams": 1000
+    },
+    "models": {
+      "tiers": [
+        "fast",
+        "balanced",
+        "premium"
+      ],
+      "backends": [
+        "ollama",
+        "vllm"
+      ],
+      "max_context_tokens": 32768
+    }
+  }
 }

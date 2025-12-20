@@ -1,4 +1,51 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "forward": {
+    "target_selector": {
+      "stack_id": "stk_usw2_node_02",
+      "region": "us-west-2",
+      "required_capabilities": [
+        "events_stream",
+        "tenant_isolation"
+      ],
+      "preferred_model_tier": "balanced"
+    },
+    "auth": {
+      "tenant_id": "tnt_demo",
+      "principal": {
+        "principal_id": "svc_stack_a",
+        "principal_type": "service"
+      },
+      "scopes": [
+        "runs:forward"
+      ],
+      "policy_context": {
+        "data_classification": "internal",
+        "region": "us-west-2",
+        "purpose": "agent_run"
+      }
+    },
+    "run_request": {
+      "agent_id": "agt_review_summarizer_v1",
+      "input": {
+        "type": "text",
+        "text": "Summarize customer feedback..."
+      },
+      "context": {
+        "locale": "en-US",
+        "timezone": "America/Los_Angeles"
+      },
+      "tooling": {
+        "tool_allowlist": [
+          "tool.sql.query"
+        ]
+      },
+      "run_options": {
+        "timeout_ms": 180000,
+        "max_steps": 30,
+        "stream_events": true
+      },
+      "idempotency_key": "idem_..."
+    },
+    "traceparent": "00-...-...-01"
+  }
 }

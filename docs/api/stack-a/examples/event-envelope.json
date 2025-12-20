@@ -1,4 +1,20 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "event": {
+    "event_id": "evt_01JH9Y0Q7T1WZ5C0J1D8K9L0MN",
+    "sequence": 12,
+    "time": "2025-12-19T22:15:36Z",
+    "type": "agentos.run.step.started",
+    "tenant_id": "tnt_demo",
+    "agent_id": "agt_review_summarizer_v1",
+    "run_id": "run_01JH9Y0Q2KQ4R7S7X6G0M3E4F8",
+    "step_id": "stp_01JH9Y0Q4YQZ2R2FQJ8K9N8M2P",
+    "trace": {
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "span_id": "00f067aa0ba902b7"
+    },
+    "payload": {
+      "name": "plan",
+      "message": "Planning next actions"
+    }
+  }
 }

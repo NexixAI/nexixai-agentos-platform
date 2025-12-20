@@ -1,4 +1,33 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "response": {
+    "request_id": "req_01JH9Y0Q9K7PZJH1K8M9N0P2Q3",
+    "status": "ok",
+    "output": {
+      "type": "chat",
+      "message": {
+        "role": "assistant",
+        "content": "Here are the actions..."
+      },
+      "tool_calls": []
+    },
+    "usage": {
+      "input_tokens": 1200,
+      "output_tokens": 220,
+      "total_tokens": 1420
+    },
+    "latency_ms": 890,
+    "policy_outcome": {
+      "decision": "allowed",
+      "reasons": [],
+      "redactions": []
+    },
+    "route": {
+      "backend": "ollama",
+      "model": "qwen2.5:7b",
+      "node": "gpu-node-1",
+      "fallback_used": false
+    }
+  },
+  "correlation_id": "corr_01JH9Y0QA5N2K4P8S9T0V1W2X3",
+  "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
 }

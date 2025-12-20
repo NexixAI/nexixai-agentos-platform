@@ -1,4 +1,30 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "input": {
+    "type": "text",
+    "text": "Summarize customer feedback from the last 24 hours and draft an action list."
+  },
+  "context": {
+    "locale": "en-US",
+    "timezone": "America/Los_Angeles",
+    "channel": "web",
+    "labels": {
+      "product": "dashboard",
+      "team": "growth"
+    }
+  },
+  "tooling": {
+    "tool_allowlist": [
+      "tool.http.fetch",
+      "tool.sql.query"
+    ],
+    "tool_denymap": []
+  },
+  "run_options": {
+    "priority": "normal",
+    "timeout_ms": 180000,
+    "max_steps": 30,
+    "stream_events": true,
+    "dry_run": false
+  },
+  "idempotency_key": "idem_8bfb6c2d-2b6d-4c7d-8f2e-1b2a0a0e7c51"
 }

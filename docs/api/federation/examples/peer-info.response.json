@@ -1,4 +1,19 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "peer": {
+    "stack_id": "stk_usw2_node_01",
+    "environment": "dev",
+    "region": "us-west-2",
+    "api_versions": [
+      "v1"
+    ],
+    "endpoints": {
+      "stack_a_base_url": "https://node01.dev.nexixai.local",
+      "stack_b_base_url": "https://node01.dev.nexixai.local/bedrock"
+    },
+    "build": {
+      "version": "1.0.2",
+      "git_sha": "abc123",
+      "timestamp": "2025-12-19T21:55:00Z"
+    }
+  }
 }

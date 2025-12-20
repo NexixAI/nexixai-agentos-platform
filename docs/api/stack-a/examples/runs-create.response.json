@@ -1,4 +1,13 @@
 {
-  "_placeholder": true,
-  "note": "Replace with canonical examples from docs/product/agentos-prs/v1.02-schemas-appendix.md"
+  "run": {
+    "tenant_id": "tnt_demo",
+    "agent_id": "agt_review_summarizer_v1",
+    "run_id": "run_01JH9Y0Q2KQ4R7S7X6G0M3E4F8",
+    "status": "queued",
+    "created_at": "2025-12-19T22:15:30Z",
+    "events_url": "/v1/runs/run_01JH9Y0Q2KQ4R7S7X6G0M3E4F8/events",
+    "output": null,
+    "error": null
+  },
+  "correlation_id": "corr_01JH9Y0QA5N2K4P8S9T0V1W2X3"
 }
