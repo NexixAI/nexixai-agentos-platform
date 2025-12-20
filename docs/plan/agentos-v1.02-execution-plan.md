@@ -8,9 +8,11 @@ It is intended to keep implementation aligned with the v1.02 specs and prevent d
 **Done**
 - Phase 0: Baseline + rules locked
 - Phase 1: Official design doc (HLD) added
+- Phase 2 (partial): Stack A OpenAPI populated (Runs + Events + Health)
 
 **Next**
-- Phase 2: Populate OpenAPI stubs from the Schemas Appendix (Stack A → Stack B → Federation)
+- Phase 2: Populate Stack B OpenAPI from Schemas Appendix
+- Phase 2: Populate Federation OpenAPI from Schemas Appendix
 
 **Blocked**
 - None
@@ -59,7 +61,7 @@ It is intended to keep implementation aligned with the v1.02 specs and prevent d
 **Goal:** machine-checkable contracts and SDK readiness.
 
 **Deliverables**
-- [ ] `docs/api/stack-a/openapi.yaml` (Runs + Events + health)
+- [x] `docs/api/stack-a/openapi.yaml` (Runs + Events + health)
 - [ ] `docs/api/stack-b/openapi.yaml` (Chat/Embeddings + Policy + Models)
 - [ ] `docs/api/federation/openapi.yaml` (Peer + Forwarding + Events semantics)
 
@@ -69,83 +71,3 @@ It is intended to keep implementation aligned with the v1.02 specs and prevent d
 3. Federation: peer info/capabilities + runs:forward (+ optional events ingest)
 
 **Exit criteria:** OpenAPI covers required v1 endpoints and matches the Schemas Appendix shapes.
-
----
-
-### Phase 3 — Canonical examples (“golden payloads”)
-**Goal:** prevent drift and enable testing.
-
-- [ ] Populate `docs/api/**/examples/*.json` with canonical payloads from the Schemas Appendix.
-
-**Exit criteria:** every required endpoint has request/response examples; event envelope example exists.
-
----
-
-### Phase 4 — Conformance tests + drift gates (CI)
-**Goal:** enforce the spec automatically.
-
-- [ ] `tests/conformance/` validates examples against schemas/OpenAPI
-- [ ] additive-only guard for `/v1`
-- [ ] CI workflow runs conformance checks
-
-**Exit criteria:** drift fails CI.
-
----
-
-### Phase 5 — Minimal Go scaffolding (matches spec)
-**Goal:** start implementing without premature complexity.
-
-- [ ] `cmd/agentos/` CLI scaffold
-- [ ] Stack A service scaffold
-- [ ] Stack B service scaffold
-- [ ] Federation endpoints scaffold
-- [ ] Ports/adapters layout + types aligned to schemas
-
-**Exit criteria:** services run locally and return schema-correct stubs.
-
----
-
-### Phase 6 — Deployment UX v1 (“one command”)
-**Goal:** operator experience: up/redeploy/validate/status/nuke + reports.
-
-- [ ] `agentos up|redeploy|validate|status|nuke`
-- [ ] real-time phase output
-- [ ] reports (md + json)
-- [ ] default seeded tenant/admin/sample agent/tool (dev/demo)
-
-**Exit criteria:** `agentos up` yields a working system + printed summary + reports + validate gates.
-
----
-
-### Phase 7 — Multi-tenancy + quotas + auditing (enforced)
-**Goal:** tenants are real and safe.
-
-- [ ] tenant-scoped persistence keys everywhere
-- [ ] enforcement: Stack A run limits; Stack B token/cost budgets + entitlements
-- [ ] audit log baseline (tenant_id always included)
-
-**Exit criteria:** cross-tenant isolation tests pass; quotas return consistent errors.
-
----
-
-### Phase 8 — Federation v1 (two nodes)
-**Goal:** prove the “connect nodes” story.
-
-- [ ] peer discovery + capabilities
-- [ ] runs:forward end-to-end
-- [ ] remote event streaming works (dedupe/order semantics)
-
-**Exit criteria:** Node A forwards run to Node B and streams events back with tenant enforcement.
-
----
-
-### Phase 9 — Hardening pass
-**Goal:** close key enterprise gaps safely.
-
-- [ ] mTLS guidance/option
-- [ ] rate limiting at edge
-- [ ] structured logs + correlation everywhere
-- [ ] alert test via SMTP
-- [ ] image/version pinning strategy
-
-**Exit criteria:** production-ish defaults exist and are documented.

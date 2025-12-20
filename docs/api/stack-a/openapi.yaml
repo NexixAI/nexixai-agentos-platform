@@ -1,6 +1,499 @@
 openapi: 3.0.3
 info:
-  title: PLACEHOLDER — AgentOS API
+  title: NexixAI AgentOS — Stack A (Orchestration) API
   version: "1.0.2"
-paths: {}
-components: {}
+  description: |
+    Stack A (Orchestration) is the product-facing control plane for AgentOS:
+    Runs, run state, and event streaming (SSE).
+
+    Source-of-truth for payload shapes remains:
+    - docs/product/agentos-prs/v1.02-schemas-appendix.md
+servers:
+  - url: /
+tags:
+  - name: Health
+  - name: Runs
+  - name: Events
+
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+paths:
+  /v1/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns basic service health for Stack A.
+      operationId: stackAHealth
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              examples:
+                ok:
+                  value:
+                    status: ok
+                    service: stack-a
+                    version: "1.0.2"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /v1/agents/{agent_id}/runs:
+    post:
+      tags: [Runs]
+      summary: Create a run for an agent
+      description: |
+        Creates a new run for the specified agent.
+
+        Idempotency:
+        - Provide `Idempotency-Key` to make this request idempotent for a given tenant/principal/agent.
+        - On replay, the service returns the existing run.
+      operationId: createRun
+      parameters:
+        - $ref: "#/components/parameters/AgentId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/XTenantId"
+        - $ref: "#/components/parameters/XCorrelationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunCreateRequest"
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunCreateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /v1/runs/{run_id}:
+    get:
+      tags: [Runs]
+      summary: Get run
+      description: Fetches the current state of a run.
+      operationId: getRun
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+        - $ref: "#/components/parameters/XTenantId"
+        - $ref: "#/components/parameters/XCorrelationId"
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Run"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /v1/runs/{run_id}/events:
+    get:
+      tags: [Events]
+      summary: Stream run events (SSE)
+      description: |
+        Streams run events as Server-Sent Events.
+
+        Response is `text/event-stream` with event payloads serialized as JSON in the SSE `data:` field.
+
+        Semantics:
+        - Delivery: at-least-once
+        - Ordering: by `sequence` per run
+        - Dedupe: by `event_id`
+      operationId: streamRunEvents
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+        - $ref: "#/components/parameters/XTenantId"
+        - $ref: "#/components/parameters/XCorrelationId"
+        - name: after_sequence
+          in: query
+          description: Start streaming after this sequence number (exclusive).
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: SSE stream
+          headers:
+            X-Request-Id:
+              $ref: "#/components/headers/XRequestId"
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              examples:
+                eventEnvelope:
+                  summary: Example SSE event (data is JSON)
+                  value: |
+                    event: agentos.event
+                    data: {"event_id":"evt_01J...","sequence":3,"run_id":"run_01J...","tenant_id":"t_123","type":"step.completed","ts":"2025-12-20T12:34:56Z","payload":{"step_id":"s1","status":"ok"},"correlation_id":"corr_01J...","trace_id":"00-..."}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Primary auth mechanism. Tenant context is derived from the token claims.
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        Optional API key for service-to-service integrations. Tenant context is still authoritative from auth context.
+
+  headers:
+    XRequestId:
+      description: Request id assigned by the service (or propagated).
+      schema:
+        type: string
+
+  parameters:
+    AgentId:
+      name: agent_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Agent identifier.
+
+    RunId:
+      name: run_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Run identifier.
+
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 256
+      description: |
+        Idempotency key for create-run. Same key returns same run for a given tenant/principal/agent.
+
+    XTenantId:
+      name: X-Tenant-Id
+      in: header
+      required: false
+      schema:
+        type: string
+      description: |
+        Optional explicit tenant header for service-to-service calls (policy choice).
+        Tenant derived from auth remains authoritative.
+
+    XCorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Correlation id for end-to-end tracing/logging.
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            badRequest:
+              value:
+                error:
+                  code: invalid_request
+                  message: Request validation failed.
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            unauthorized:
+              value:
+                error:
+                  code: unauthorized
+                  message: Missing or invalid credentials.
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            forbidden:
+              value:
+                error:
+                  code: forbidden
+                  message: Not permitted.
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            notFound:
+              value:
+                error:
+                  code: not_found
+                  message: Resource not found.
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            conflict:
+              value:
+                error:
+                  code: conflict
+                  message: Conflicting request/state.
+    RateLimited:
+      description: Rate limited
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            rateLimited:
+              value:
+                error:
+                  code: rate_limited
+                  message: Too many requests.
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            internal:
+              value:
+                error:
+                  code: internal
+                  message: Unexpected error.
+    ServiceUnavailable:
+      description: Service unavailable
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          examples:
+            unavailable:
+              value:
+                error:
+                  code: service_unavailable
+                  message: Dependency unavailable.
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        service:
+          type: string
+          enum: [stack-a]
+        version:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorObject"
+
+    ErrorObject:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code.
+        message:
+          type: string
+        details:
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: array
+              items:
+                type: object
+                additionalProperties: true
+
+    RunStatus:
+      type: string
+      enum: [queued, running, completed, failed, canceled]
+
+    ChatRole:
+      type: string
+      enum: [system, user, assistant, tool]
+
+    ChatMessage:
+      type: object
+      required: [role, content]
+      properties:
+        role:
+          $ref: "#/components/schemas/ChatRole"
+        content:
+          type: string
+        name:
+          type: string
+          description: Optional name for tool/function roles.
+
+    ToolDescriptor:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        input_schema:
+          type: object
+          additionalProperties: true
+
+    RunCreateRequest:
+      type: object
+      required: [input]
+      properties:
+        input:
+          type: object
+          required: [messages]
+          properties:
+            messages:
+              type: array
+              items: { $ref: "#/components/schemas/ChatMessage" }
+            tools:
+              type: array
+              items: { $ref: "#/components/schemas/ToolDescriptor" }
+            metadata:
+              type: object
+              additionalProperties: true
+        mode:
+          type: string
+          enum: [sync, async]
+          default: async
+          description: |
+            sync: returns after completion (if supported), async: returns immediately with run_id.
+        stream_events:
+          type: boolean
+          default: true
+          description: Whether events will be produced/available for streaming.
+
+    RunCreateResponse:
+      type: object
+      required: [run, links]
+      properties:
+        run:
+          $ref: "#/components/schemas/Run"
+        links:
+          type: object
+          required: [events_url]
+          properties:
+            events_url:
+              type: string
+              description: Relative URL for SSE event stream.
+            run_url:
+              type: string
+              description: Relative URL for run state.
+
+    Run:
+      type: object
+      required: [run_id, agent_id, status, created_at]
+      properties:
+        run_id:
+          type: string
+        agent_id:
+          type: string
+        tenant_id:
+          type: string
+          description: Tenant id (present in persisted objects; may be omitted from some external views depending on policy).
+        status:
+          $ref: "#/components/schemas/RunStatus"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        input:
+          type: object
+          properties:
+            messages:
+              type: array
+              items: { $ref: "#/components/schemas/ChatMessage" }
+            metadata:
+              type: object
+              additionalProperties: true
+        output:
+          type: object
+          properties:
+            messages:
+              type: array
+              items: { $ref: "#/components/schemas/ChatMessage" }
+            summary:
+              type: string
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true

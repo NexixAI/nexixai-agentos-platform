@@ -6,12 +6,11 @@ Append-only log of execution progress. Keep entries short and factual.
 
 ## 2025-12-20
 **Completed**
-- Added Phase 0/1 repo baseline: specs (PRS + Schemas Appendix), `SPEC_AUTHORITY.md`, `AGENTS.md`
-- Added official design doc: `docs/design/agentos-v1.02-design.md`
-- Scaffolded OpenAPI folders: `docs/api/stack-a|stack-b|federation/openapi.yaml`
+- Phase 2 (Stack A): Implemented `docs/api/stack-a/openapi.yaml` (health, create run, get run, stream events).
 
 **Next**
-- Phase 2: populate OpenAPI from Schemas Appendix (Stack A first)
+- Phase 2: Implement `docs/api/stack-b/openapi.yaml` from Schemas Appendix.
+- Phase 2: Implement `docs/api/federation/openapi.yaml` from Schemas Appendix.
 
-**Risks / Notes**
-- Avoid contract drift: Appendix → OpenAPI → examples → tests.
+**Notes**
+- Validate Stack A OpenAPI against Schemas Appendix; adjust payload fields to match canonical contract.
