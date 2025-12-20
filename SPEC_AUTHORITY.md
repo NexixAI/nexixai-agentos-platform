@@ -18,9 +18,12 @@ It exists to prevent “interpretation drift” between specs, code, and generat
 3. `docs/product/agentos-prs/v1.02-prs.md`  
    Source of truth for **behavioral requirements**, quality attributes, deployment UX, observability, and acceptance criteria.
 
-4. Examples + conformance tests (once added)
+4. `docs/design/agentos-v1.02-design.md`  
+   Source of truth for **internal architecture decisions**: module boundaries, ports/adapters, persistence strategy, multi-tenancy enforcement points, and federation mechanics.
+
+5. Examples + conformance tests (once added)
    - `docs/api/*/examples/*.json`
-   - `tests/conformance/*` (future)
+   - `tests/conformance/*`
 
 ## Conflict resolution (strict)
 
@@ -28,8 +31,9 @@ If documents disagree, the precedence order is:
 1) Schemas Appendix  
 2) OpenAPI specs  
 3) PRS  
-4) Examples / tests  
-5) Everything else
+4) Design doc  
+5) Examples / tests  
+6) Everything else
 
 If a conflict is found:
 - **Do not invent new fields or semantics in code.**
