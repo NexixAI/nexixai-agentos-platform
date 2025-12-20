@@ -5,12 +5,11 @@ Append-only log of execution progress. Keep entries short and factual.
 ---
 
 ## 2025-12-20
-**Completed**
-- Phase 2 (Stack A): Implemented `docs/api/stack-a/openapi.yaml` (health, create run, get run, stream events).
+**Audit finding**
+- Stack A OpenAPI draft drifted from the Schemas Appendix (request/response shape, error model, SSE event envelope).
+
+**Fix**
+- Align `docs/api/stack-a/openapi.yaml` to the Schemas Appendix canonical shapes (RunCreateRequest/Response, ErrorResponse, EventEnvelope).
 
 **Next**
-- Phase 2: Implement `docs/api/stack-b/openapi.yaml` from Schemas Appendix.
-- Phase 2: Implement `docs/api/federation/openapi.yaml` from Schemas Appendix.
-
-**Notes**
-- Validate Stack A OpenAPI against Schemas Appendix; adjust payload fields to match canonical contract.
+- Once aligned: proceed to Stack B OpenAPI and Federation OpenAPI.

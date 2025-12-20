@@ -4,12 +4,16 @@ info:
   version: "1.0.2"
   description: |
     Stack A (Orchestration) is the product-facing control plane for AgentOS:
-    Runs, run state, and event streaming (SSE).
+    - Create Runs
+    - Fetch Run state
+    - Stream Run events (SSE)
 
-    Source-of-truth for payload shapes remains:
+    Payload truth is defined in:
     - docs/product/agentos-prs/v1.02-schemas-appendix.md
+
 servers:
   - url: /
+
 tags:
   - name: Health
   - name: Runs
@@ -24,7 +28,6 @@ paths:
     get:
       tags: [Health]
       summary: Health check
-      description: Returns basic service health for Stack A.
       operationId: stackAHealth
       responses:
         "200":
@@ -53,12 +56,16 @@ paths:
         Creates a new run for the specified agent.
 
         Idempotency:
-        - Provide `Idempotency-Key` to make this request idempotent for a given tenant/principal/agent.
-        - On replay, the service returns the existing run.
+        - Provide `idempotency_key` in the request body to make this operation idempotent.
+        - Replays return the existing run for the same tenant/principal/agent + key.
+
+        Tenant:
+        - `tenant_id` is derived from auth (JWT/service token).
+        - An optional `X-Tenant-Id` header may be used for service-to-service calls (policy choice),
+          but internal `auth.tenant_id` remains authoritative.
       operationId: createRun
       parameters:
         - $ref: "#/components/parameters/AgentId"
-        - $ref: "#/components/parameters/IdempotencyKey"
         - $ref: "#/components/parameters/XTenantId"
         - $ref: "#/components/parameters/XCorrelationId"
       requestBody:
@@ -111,7 +118,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Run"
+                $ref: "#/components/schemas/RunGetResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -132,12 +139,12 @@ paths:
       description: |
         Streams run events as Server-Sent Events.
 
-        Response is `text/event-stream` with event payloads serialized as JSON in the SSE `data:` field.
+        Response is `text/event-stream` with the event envelope serialized as JSON in the SSE `data:` field.
 
         Semantics:
         - Delivery: at-least-once
-        - Ordering: by `sequence` per run
-        - Dedupe: by `event_id`
+        - Ordering: by `event.sequence` per run
+        - Dedupe: by `event.event_id`
       operationId: streamRunEvents
       parameters:
         - $ref: "#/components/parameters/RunId"
@@ -145,8 +152,8 @@ paths:
         - $ref: "#/components/parameters/XCorrelationId"
         - name: after_sequence
           in: query
-          description: Start streaming after this sequence number (exclusive).
           required: false
+          description: Start streaming after this sequence number (exclusive).
           schema:
             type: integer
             minimum: 0
@@ -165,7 +172,8 @@ paths:
                   summary: Example SSE event (data is JSON)
                   value: |
                     event: agentos.event
-                    data: {"event_id":"evt_01J...","sequence":3,"run_id":"run_01J...","tenant_id":"t_123","type":"step.completed","ts":"2025-12-20T12:34:56Z","payload":{"step_id":"s1","status":"ok"},"correlation_id":"corr_01J...","trace_id":"00-..."}
+                    data: {"event":{"event_id":"evt_01J...","sequence":12,"time":"2025-12-19T22:15:36Z","type":"agentos.run.step.started","tenant_id":"tnt_demo","agent_id":"agt_...","run_id":"run_...","step_id":"stp_...","trace":{"traceparent":"00-...-...-01","span_id":"..."},"payload":{"name":"plan","message":"Planning next actions"}}}
+
         "401":
           $ref: "#/components/responses/Unauthorized"
         "403":
@@ -186,13 +194,13 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: |
-        Primary auth mechanism. Tenant context is derived from the token claims.
+        Primary auth mechanism. Tenant context is derived from token claims.
     apiKeyAuth:
       type: apiKey
       in: header
       name: X-API-Key
       description: |
-        Optional API key for service-to-service integrations. Tenant context is still authoritative from auth context.
+        Optional API key for service-to-service integrations.
 
   headers:
     XRequestId:
@@ -205,34 +213,21 @@ components:
       name: agent_id
       in: path
       required: true
-      schema:
-        type: string
+      schema: { type: string }
       description: Agent identifier.
 
     RunId:
       name: run_id
       in: path
       required: true
-      schema:
-        type: string
+      schema: { type: string }
       description: Run identifier.
-
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: false
-      schema:
-        type: string
-        maxLength: 256
-      description: |
-        Idempotency key for create-run. Same key returns same run for a given tenant/principal/agent.
 
     XTenantId:
       name: X-Tenant-Id
       in: header
       required: false
-      schema:
-        type: string
+      schema: { type: string }
       description: |
         Optional explicit tenant header for service-to-service calls (policy choice).
         Tenant derived from auth remains authoritative.
@@ -241,8 +236,7 @@ components:
       name: X-Correlation-Id
       in: header
       required: false
-      schema:
-        type: string
+      schema: { type: string }
       description: Correlation id for end-to-end tracing/logging.
 
   responses:
@@ -251,249 +245,238 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
-          examples:
-            badRequest:
-              value:
-                error:
-                  code: invalid_request
-                  message: Request validation failed.
     Unauthorized:
       description: Unauthorized
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
-          examples:
-            unauthorized:
-              value:
-                error:
-                  code: unauthorized
-                  message: Missing or invalid credentials.
     Forbidden:
       description: Forbidden
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
-          examples:
-            forbidden:
-              value:
-                error:
-                  code: forbidden
-                  message: Not permitted.
     NotFound:
       description: Not found
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
-          examples:
-            notFound:
-              value:
-                error:
-                  code: not_found
-                  message: Resource not found.
     Conflict:
       description: Conflict
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
-          examples:
-            conflict:
-              value:
-                error:
-                  code: conflict
-                  message: Conflicting request/state.
     RateLimited:
       description: Rate limited
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
-          examples:
-            rateLimited:
-              value:
-                error:
-                  code: rate_limited
-                  message: Too many requests.
     InternalError:
       description: Internal server error
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
-          examples:
-            internal:
-              value:
-                error:
-                  code: internal
-                  message: Unexpected error.
     ServiceUnavailable:
       description: Service unavailable
       content:
         application/json:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
-          examples:
-            unavailable:
-              value:
-                error:
-                  code: service_unavailable
-                  message: Dependency unavailable.
 
   schemas:
     HealthResponse:
       type: object
       required: [status, service, version]
       properties:
-        status:
-          type: string
-          enum: [ok]
-        service:
-          type: string
-          enum: [stack-a]
-        version:
-          type: string
+        status: { type: string, enum: [ok] }
+        service: { type: string, enum: [stack-a] }
+        version: { type: string }
 
+    # Error model (matches Schemas Appendix)
     ErrorResponse:
       type: object
-      required: [error]
+      required: [error, correlation_id]
       properties:
         error:
           $ref: "#/components/schemas/ErrorObject"
+        correlation_id:
+          type: string
 
     ErrorObject:
       type: object
-      required: [code, message]
+      required: [code, message, retryable, details]
       properties:
-        code:
-          type: string
-          description: Machine-readable error code.
-        message:
-          type: string
+        code: { type: string }
+        message: { type: string }
+        retryable: { type: boolean }
         details:
-          oneOf:
-            - type: object
-              additionalProperties: true
-            - type: array
-              items:
-                type: object
-                additionalProperties: true
+          type: object
+          additionalProperties: true
 
     RunStatus:
       type: string
       enum: [queued, running, completed, failed, canceled]
 
-    ChatRole:
+    Priority:
       type: string
-      enum: [system, user, assistant, tool]
+      enum: [low, normal, high]
 
-    ChatMessage:
+    RunInput:
       type: object
-      required: [role, content]
+      required: [type]
       properties:
-        role:
-          $ref: "#/components/schemas/ChatRole"
-        content:
+        type:
           type: string
-        name:
+          description: Input type.
+          enum: [text]
+        text:
           type: string
-          description: Optional name for tool/function roles.
+          nullable: true
+          description: Present when input.type == "text".
+      additionalProperties: false
 
-    ToolDescriptor:
+    RunContext:
       type: object
-      required: [name]
       properties:
-        name:
-          type: string
-        description:
-          type: string
-        input_schema:
+        locale: { type: string }
+        timezone: { type: string }
+        channel: { type: string }
+        labels:
           type: object
-          additionalProperties: true
+          additionalProperties: { type: string }
+      additionalProperties: true
+
+    RunConstraints:
+      type: object
+      description: Constraints for the run (tools, policies, etc.).
+      properties:
+        tool_denymap:
+          type: array
+          items: { type: string }
+      additionalProperties: true
+
+    RunOptions:
+      type: object
+      properties:
+        priority: { $ref: "#/components/schemas/Priority" }
+        timeout_ms: { type: integer, minimum: 0 }
+        max_steps: { type: integer, minimum: 0 }
+        stream_events: { type: boolean }
+        dry_run: { type: boolean }
+      additionalProperties: true
 
     RunCreateRequest:
       type: object
       required: [input]
       properties:
         input:
-          type: object
-          required: [messages]
-          properties:
-            messages:
-              type: array
-              items: { $ref: "#/components/schemas/ChatMessage" }
-            tools:
-              type: array
-              items: { $ref: "#/components/schemas/ToolDescriptor" }
-            metadata:
-              type: object
-              additionalProperties: true
-        mode:
+          $ref: "#/components/schemas/RunInput"
+        context:
+          $ref: "#/components/schemas/RunContext"
+        constraints:
+          $ref: "#/components/schemas/RunConstraints"
+        run_options:
+          $ref: "#/components/schemas/RunOptions"
+        idempotency_key:
           type: string
-          enum: [sync, async]
-          default: async
-          description: |
-            sync: returns after completion (if supported), async: returns immediately with run_id.
-        stream_events:
-          type: boolean
-          default: true
-          description: Whether events will be produced/available for streaming.
+          description: Idempotency key for create-run.
+      additionalProperties: false
 
-    RunCreateResponse:
+    RunOutput:
       type: object
-      required: [run, links]
       properties:
-        run:
-          $ref: "#/components/schemas/Run"
-        links:
+        type: { type: string }
+        text: { type: string, nullable: true }
+      additionalProperties: true
+
+    RunError:
+      type: object
+      required: [code, message, retryable]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        retryable: { type: boolean }
+        details:
           type: object
-          required: [events_url]
-          properties:
-            events_url:
-              type: string
-              description: Relative URL for SSE event stream.
-            run_url:
-              type: string
-              description: Relative URL for run state.
+          additionalProperties: true
+      additionalProperties: true
 
     Run:
       type: object
-      required: [run_id, agent_id, status, created_at]
+      required: [tenant_id, agent_id, run_id, status, created_at]
       properties:
-        run_id:
-          type: string
-        agent_id:
-          type: string
-        tenant_id:
-          type: string
-          description: Tenant id (present in persisted objects; may be omitted from some external views depending on policy).
-        status:
-          $ref: "#/components/schemas/RunStatus"
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        input:
+        tenant_id: { type: string }
+        agent_id: { type: string }
+        run_id: { type: string }
+        status: { $ref: "#/components/schemas/RunStatus" }
+        created_at: { type: string, format: date-time }
+        started_at: { type: string, format: date-time, nullable: true }
+        completed_at: { type: string, format: date-time, nullable: true }
+        events_url: { type: string }
+        run_options: { $ref: "#/components/schemas/RunOptions" }
+        summary:
           type: object
-          properties:
-            messages:
-              type: array
-              items: { $ref: "#/components/schemas/ChatMessage" }
-            metadata:
-              type: object
-              additionalProperties: true
+          additionalProperties: true
         output:
-          type: object
-          properties:
-            messages:
-              type: array
-              items: { $ref: "#/components/schemas/ChatMessage" }
-            summary:
-              type: string
+          oneOf:
+            - $ref: "#/components/schemas/RunOutput"
+            - type: "null"
         error:
+          oneOf:
+            - $ref: "#/components/schemas/RunError"
+            - type: "null"
+        correlation_id:
+          type: string
+          description: Correlation id associated with the run.
+      additionalProperties: true
+
+    RunCreateResponse:
+      type: object
+      required: [run, correlation_id]
+      properties:
+        run:
+          $ref: "#/components/schemas/Run"
+        correlation_id:
+          type: string
+      additionalProperties: false
+
+    RunGetResponse:
+      type: object
+      required: [run]
+      properties:
+        run:
+          $ref: "#/components/schemas/Run"
+        correlation_id:
+          type: string
+      additionalProperties: false
+
+    TraceContext:
+      type: object
+      properties:
+        traceparent: { type: string }
+        span_id: { type: string }
+      additionalProperties: true
+
+    Event:
+      type: object
+      required: [event_id, sequence, time, type, tenant_id, agent_id, run_id, payload]
+      properties:
+        event_id: { type: string }
+        sequence: { type: integer, minimum: 0 }
+        time: { type: string, format: date-time }
+        type: { type: string }
+        tenant_id: { type: string }
+        agent_id: { type: string }
+        run_id: { type: string }
+        step_id: { type: string, nullable: true }
+        trace: { $ref: "#/components/schemas/TraceContext" }
+        payload:
           type: object
-          properties:
-            code:
-              type: string
-            message:
-              type: string
-            details:
-              type: object
-              additionalProperties: true
+          additionalProperties: true
+      additionalProperties: true
+
+    EventEnvelope:
+      type: object
+      required: [event]
+      properties:
+        event:
+          $ref: "#/components/schemas/Event"
+      additionalProperties: false
