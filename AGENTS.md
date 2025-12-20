@@ -32,3 +32,6 @@ Read and follow `SPEC_AUTHORITY.md`. If specs conflict, follow the precedence or
 - Update only the necessary files.
 - If APIs change: update OpenAPI + examples + docs together.
 - Include: short notes on what changed and why.
+## Execution plan editing rule (DO NOT BREAK)
+- Never overwrite `docs/plan/agentos-v1.02-execution-plan.md` with a shortened template.
+- Only update the **Current status** section, and append entries to `docs/plan/progress-log.md`.

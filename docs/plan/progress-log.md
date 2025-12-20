@@ -5,11 +5,25 @@ Append-only log of execution progress. Keep entries short and factual.
 ---
 
 ## 2025-12-20
-**Completed**
-- Restored the full Phase 0–9 execution plan structure in `docs/plan/agentos-v1.02-execution-plan.md` (some earlier bundles unintentionally truncated the plan file).
+**Audit finding**
+- Stack A OpenAPI draft drifted from the Schemas Appendix (request/response shape, error model, SSE event envelope).
+
+**Fix**
+- Align `docs/api/stack-a/openapi.yaml` to the Schemas Appendix canonical shapes (RunCreateRequest/Response, ErrorResponse, EventEnvelope).
 
 **Next**
-- Continue Phase 2: align Stack A OpenAPI to the Schemas Appendix, then complete Stack B + Federation OpenAPI.
+- Once aligned: proceed to Stack B OpenAPI and Federation OpenAPI.
+
+---
+
+## 2025-12-20
+**Completed**
+- Consolidated Phase 2 corrections into a single zip patch (restored full Phase 0–9 plan + aligned Stack A OpenAPI to Schemas Appendix to remove drift).
+
+**Next**
+- Finish Phase 2 by generating Stack B OpenAPI and Federation OpenAPI directly from the Schemas Appendix.
+- Start Phase 3 canonical examples once all OpenAPI specs are aligned.
 
 **Notes**
-- Rule going forward: OpenAPI/phase bundles must not replace the plan with a shortened template; only update the “Current status” section.
+- Going forward: no more “template overwrites” of the plan; only update the Current status section and append progress entries.
+
