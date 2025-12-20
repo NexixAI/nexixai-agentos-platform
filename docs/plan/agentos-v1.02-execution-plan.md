@@ -9,15 +9,16 @@ It keeps us honest: we move fast **without drifting**.
 **Done**
 - Phase 0: Baseline + rules locked
 - Phase 1: Official design doc (HLD) added
-- Phase 2: Stack B OpenAPI created (aligned to Schemas Appendix Section E)
-
-**In progress**
-- Phase 2: Stack A OpenAPI alignment to Schemas Appendix
+- Phase 2: Stack A OpenAPI populated (Runs + Events + health)
+- Phase 2: Stack B OpenAPI populated (Models + Invoke + Policy + health)
+- Phase 2: Federation OpenAPI populated (Peers + Capabilities + runs:forward + events ingest/stream)
 
 **Next**
-- Phase 2: Federation OpenAPI (aligned to Schemas Appendix Section F)
-- Phase 3: Canonical examples (golden payloads)
+- Phase 3: Populate canonical examples (golden payloads) for Stack A/B/Federation
+- Phase 4: Conformance tests + CI drift gates
 
+**Blocked**
+- None
 ## Change control rules (no drift, no thrash)
 
 1. **Schemas Appendix wins** for payload truth.

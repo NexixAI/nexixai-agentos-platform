@@ -31,12 +31,11 @@ Append-only log of execution progress. Keep entries short and factual.
 
 ## 2025-12-20
 **Completed**
-- Phase 2: Stack B OpenAPI implemented (`docs/api/stack-b/openapi.yaml`).
-- Schemas Appendix updated to fully specify Stack B (chat invoke, embeddings invoke, list models) so OpenAPI can match without interpretation drift.
+- Phase 2 (Federation): Implemented `docs/api/federation/openapi.yaml` (peer discovery/capabilities, `runs:forward`, and event backhaul endpoints).
 
 **Next**
-- Finish Phase 2: Federation OpenAPI.
-- Return to Phase 2: close remaining Stack A vs Appendix drift (if any), then proceed to Phase 3 examples.
+- Phase 3: Populate `docs/api/**/examples/*.json` with canonical payloads from the Schemas Appendix.
+- Phase 4: Add conformance tests + CI drift gates (OpenAPI validation + example/schema checks).
 
 **Notes**
-- This change is additive: it replaces the previously abbreviated Stack B appendix section with explicit canonical payloads and adds the Stack B OpenAPI.
+- Federation OpenAPI uses external `$ref` to Stack A schemas where possible to reduce drift.

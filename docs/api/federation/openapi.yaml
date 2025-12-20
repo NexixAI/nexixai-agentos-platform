@@ -1,6 +1,485 @@
 openapi: 3.0.3
 info:
-  title: PLACEHOLDER — AgentOS API
+  title: NexixAI AgentOS — Federation API
   version: "1.0.2"
-paths: {}
-components: {}
+  description: |
+    Federation connects AgentOS nodes across environments. It supports:
+    - Peer discovery + capabilities
+    - Forwarding runs to remote nodes (tenant-safe)
+    - Event backhaul (SSE proxy and/or push ingest)
+
+    Contract authority:
+    - docs/product/agentos-prs/v1.02-schemas-appendix.md
+servers:
+  - url: /
+
+tags:
+  - name: Health
+  - name: Peers
+  - name: Forwarding
+  - name: Events
+
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+paths:
+  /v1/federation/health:
+    get:
+      tags: [Health]
+      summary: Federation health check
+      operationId: federationHealth
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthResponse" }
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /v1/federation/peers:
+    get:
+      tags: [Peers]
+      summary: List peers
+      operationId: listPeers
+      parameters:
+        - $ref: "#/components/parameters/XCorrelationId"
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PeerListResponse"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+    post:
+      tags: [Peers]
+      summary: Register or update a peer
+      description: |
+        Registers a peer connection profile (admin/ops). In many deployments this is configured
+        out-of-band and this endpoint is disabled.
+      operationId: upsertPeer
+      parameters:
+        - $ref: "#/components/parameters/XCorrelationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PeerUpsertRequest" }
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PeerUpsertResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /v1/federation/peers/{peer_id}:
+    get:
+      tags: [Peers]
+      summary: Get peer
+      operationId: getPeer
+      parameters:
+        - $ref: "#/components/parameters/PeerId"
+        - $ref: "#/components/parameters/XCorrelationId"
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PeerGetResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /v1/federation/peers/{peer_id}/capabilities:
+    get:
+      tags: [Peers]
+      summary: Get peer capabilities
+      operationId: getPeerCapabilities
+      parameters:
+        - $ref: "#/components/parameters/PeerId"
+        - $ref: "#/components/parameters/XCorrelationId"
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PeerCapabilitiesResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /v1/federation/runs:forward:
+    post:
+      tags: [Forwarding]
+      summary: Forward a run to a remote peer
+      description: |
+        Forwards a Stack A RunCreateRequest to a remote peer.
+
+        Tenant-safety:
+        - `tenant_id` must be present in AuthContext.
+        - Remote node must enforce tenant isolation and quotas.
+
+        Idempotency:
+        - Forwarding requests are idempotent via `forward_idempotency_key`.
+      operationId: forwardRun
+      parameters:
+        - $ref: "#/components/parameters/XCorrelationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FederationForwardRunRequest" }
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FederationForwardRunResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+
+  /v1/federation/runs/{run_id}/events:
+    get:
+      tags: [Events]
+      summary: Stream events for a (possibly remote) run (SSE)
+      description: |
+        Streams events. In a federated scenario, this endpoint may proxy events from a remote peer
+        or serve locally persisted backhauled events.
+
+        The SSE `data:` field is a JSON object matching `EventEnvelope`.
+      operationId: streamFederatedRunEvents
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+        - $ref: "#/components/parameters/XCorrelationId"
+        - name: after_sequence
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        "200":
+          description: SSE stream
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            text/event-stream:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+
+  /v1/federation/events:ingest:
+    post:
+      tags: [Events]
+      summary: Ingest backhauled events from a peer (push mode)
+      description: |
+        Optional push-based backhaul: a peer can POST events to this endpoint.
+
+        Dedupe:
+        - Dedupe by `event.event_id` per tenant/run.
+        Ordering:
+        - Order by `event.sequence` per run.
+      operationId: ingestFederatedEvents
+      parameters:
+        - $ref: "#/components/parameters/XCorrelationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FederationEventIngestRequest" }
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FederationEventIngestResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  headers:
+    XRequestId:
+      description: Request id assigned by the service (or propagated).
+      schema: { type: string }
+
+  parameters:
+    PeerId:
+      name: peer_id
+      in: path
+      required: true
+      schema: { type: string }
+    RunId:
+      name: run_id
+      in: path
+      required: true
+      schema: { type: string }
+    XCorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema: { type: string }
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema: { $ref: "../stack-a/openapi.yaml#/components/schemas/ErrorResponse" }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "../stack-a/openapi.yaml#/components/schemas/ErrorResponse" }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: "../stack-a/openapi.yaml#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: "../stack-a/openapi.yaml#/components/schemas/ErrorResponse" }
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema: { $ref: "../stack-a/openapi.yaml#/components/schemas/ErrorResponse" }
+    RateLimited:
+      description: Rate limited
+      content:
+        application/json:
+          schema: { $ref: "../stack-a/openapi.yaml#/components/schemas/ErrorResponse" }
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema: { $ref: "../stack-a/openapi.yaml#/components/schemas/ErrorResponse" }
+    ServiceUnavailable:
+      description: Service unavailable
+      content:
+        application/json:
+          schema: { $ref: "../stack-a/openapi.yaml#/components/schemas/ErrorResponse" }
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version]
+      properties:
+        status: { type: string, enum: [ok] }
+        service: { type: string, enum: [federation] }
+        version: { type: string }
+
+    # ---- Peers ----
+    Peer:
+      type: object
+      required: [peer_id, name, base_url, status]
+      properties:
+        peer_id: { type: string }
+        name: { type: string }
+        base_url: { type: string, description: Base URL for the peer node. }
+        status: { type: string, enum: [active, disabled] }
+        trust:
+          $ref: "#/components/schemas/PeerTrust"
+        metadata:
+          type: object
+          additionalProperties: true
+
+    PeerTrust:
+      type: object
+      description: Trust configuration for peer connections.
+      properties:
+        mode:
+          type: string
+          enum: [mutual_tls, api_key, bearer]
+        allow_tenants:
+          type: array
+          items: { type: string }
+
+    PeerCapabilities:
+      type: object
+      required: [protocol_version, supported_operations, event_backhaul]
+      properties:
+        protocol_version:
+          type: string
+          example: "1.0"
+        supported_operations:
+          type: array
+          items: { type: string }
+          description: e.g. ["runs.forward", "events.ingest", "events.sse_proxy"]
+        event_backhaul:
+          type: object
+          required: [mode]
+          properties:
+            mode:
+              type: string
+              enum: [sse_proxy, push_ingest, none]
+            max_batch:
+              type: integer
+            max_event_size_bytes:
+              type: integer
+
+    PeerListResponse:
+      type: object
+      required: [peers]
+      properties:
+        peers:
+          type: array
+          items: { $ref: "#/components/schemas/Peer" }
+
+    PeerGetResponse:
+      type: object
+      required: [peer]
+      properties:
+        peer: { $ref: "#/components/schemas/Peer" }
+
+    PeerCapabilitiesResponse:
+      type: object
+      required: [peer_id, capabilities]
+      properties:
+        peer_id: { type: string }
+        capabilities: { $ref: "#/components/schemas/PeerCapabilities" }
+
+    PeerUpsertRequest:
+      type: object
+      required: [peer]
+      properties:
+        peer: { $ref: "#/components/schemas/Peer" }
+
+    PeerUpsertResponse:
+      type: object
+      required: [peer]
+      properties:
+        peer: { $ref: "#/components/schemas/Peer" }
+
+    # ---- Forwarding ----
+    AuthContext:
+      type: object
+      required: [tenant_id, principal_id, scopes]
+      properties:
+        tenant_id: { type: string }
+        principal_id: { type: string }
+        scopes:
+          type: array
+          items: { type: string }
+        subject_type:
+          type: string
+          enum: [user, service]
+        api_key_id: { type: string }
+        jwt_claims:
+          type: object
+          additionalProperties: true
+
+    ForwardingOptions:
+      type: object
+      properties:
+        target_peer_id: { type: string }
+        forward_timeout_ms: { type: integer, minimum: 1 }
+        return_events: { type: boolean, default: true }
+        forward_idempotency_key:
+          type: string
+          maxLength: 256
+
+    FederationForwardRunRequest:
+      type: object
+      required: [forwarding, auth, run_create]
+      properties:
+        forwarding: { $ref: "#/components/schemas/ForwardingOptions" }
+        auth: { $ref: "#/components/schemas/AuthContext" }
+        run_create:
+          $ref: "../stack-a/openapi.yaml#/components/schemas/RunCreateRequest"
+        trace:
+          $ref: "#/components/schemas/TraceContext"
+
+    FederationForwardRunResponse:
+      type: object
+      required: [forwarded_to, run, correlation_id]
+      properties:
+        forwarded_to:
+          type: object
+          required: [peer_id]
+          properties:
+            peer_id: { type: string }
+            remote_run_id: { type: string }
+        run:
+          $ref: "../stack-a/openapi.yaml#/components/schemas/Run"
+        correlation_id:
+          type: string
+
+    # ---- Events (push ingest) ----
+    FederationEventIngestRequest:
+      type: object
+      required: [peer_id, events, auth]
+      properties:
+        peer_id: { type: string }
+        auth: { $ref: "#/components/schemas/AuthContext" }
+        events:
+          type: array
+          items:
+            $ref: "../stack-a/openapi.yaml#/components/schemas/EventEnvelope"
+        trace:
+          $ref: "#/components/schemas/TraceContext"
+
+    FederationEventIngestResponse:
+      type: object
+      required: [accepted, rejected, correlation_id]
+      properties:
+        accepted: { type: integer, minimum: 0 }
+        rejected: { type: integer, minimum: 0 }
+        correlation_id: { type: string }
+
+    TraceContext:
+      type: object
+      properties:
+        traceparent: { type: string }
+        tracestate: { type: string }
