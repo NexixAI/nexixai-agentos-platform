@@ -1,6 +1,514 @@
 openapi: 3.0.3
 info:
-  title: PLACEHOLDER — AgentOS API
+  title: NexixAI AgentOS — Stack B (Model Services) API
   version: "1.0.2"
-paths: {}
-components: {}
+  description: |
+    Stack B provides governed, vendor-agnostic model access ("Bedrock-like") for Stack A and trusted internal callers.
+
+    Contract authority:
+    - docs/product/agentos-prs/v1.02-schemas-appendix.md (Section E)
+
+servers:
+  - url: /
+
+tags:
+  - name: Health
+  - name: Models
+  - name: Policy
+
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+
+paths:
+  /v1/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: stackBHealth
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthResponse" }
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /v1/models:
+    get:
+      tags: [Models]
+      summary: List models and capabilities
+      operationId: listModels
+      parameters:
+        - $ref: "#/components/parameters/XTenantId"
+        - $ref: "#/components/parameters/XCorrelationId"
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ModelsListResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+
+  /v1/models:invoke:
+    post:
+      tags: [Models]
+      summary: Invoke a model operation (chat or embed)
+      description: |
+        Canonical Stack A → Stack B invocation. Operation is selected by `request.operation`.
+
+        - `operation=chat` uses `ChatInput` + `ChatGeneration`.
+        - `operation=embed` uses `EmbeddingInput`.
+      operationId: invokeModel
+      parameters:
+        - $ref: "#/components/parameters/XTenantId"
+        - $ref: "#/components/parameters/XCorrelationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ModelInvokeRequest" }
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ModelInvokeResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+
+  /v1/policy:check:
+    post:
+      tags: [Policy]
+      summary: Policy check for a piece of content
+      operationId: policyCheck
+      parameters:
+        - $ref: "#/components/parameters/XTenantId"
+        - $ref: "#/components/parameters/XCorrelationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PolicyCheckRequest" }
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-Id: { $ref: "#/components/headers/XRequestId" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PolicyCheckResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  headers:
+    XRequestId:
+      description: Request id assigned by the service (or propagated).
+      schema: { type: string }
+
+  parameters:
+    XTenantId:
+      name: X-Tenant-Id
+      in: header
+      required: false
+      schema: { type: string }
+      description: Optional explicit tenant header for S2S routing; auth-derived tenant remains authoritative.
+    XCorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema: { type: string }
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    RateLimited:
+      description: Rate limited
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    ServiceUnavailable:
+      description: Service unavailable
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version]
+      properties:
+        status: { type: string, enum: [ok] }
+        service: { type: string, enum: [stack-b] }
+        version: { type: string }
+
+    # -------------------------
+    # Auth envelope (internal)
+    # -------------------------
+    AuthContext:
+      type: object
+      required: [tenant_id, principal, scopes, policy_context]
+      additionalProperties: true
+      properties:
+        tenant_id: { type: string }
+        principal: { $ref: "#/components/schemas/Principal" }
+        scopes:
+          type: array
+          items: { type: string }
+        roles:
+          type: array
+          items: { type: string }
+        policy_context: { $ref: "#/components/schemas/PolicyContext" }
+
+    Principal:
+      type: object
+      required: [principal_id, principal_type]
+      additionalProperties: true
+      properties:
+        principal_id: { type: string }
+        principal_type: { type: string, enum: [user, service] }
+        display_name: { type: string }
+
+    PolicyContext:
+      type: object
+      required: [data_classification, region, purpose]
+      additionalProperties: true
+      properties:
+        data_classification: { type: string }
+        region: { type: string }
+        purpose: { type: string }
+
+    # -------------------------
+    # Models
+    # -------------------------
+    ModelRequirements:
+      type: object
+      additionalProperties: false
+      properties:
+        max_latency_ms: { type: integer, minimum: 1 }
+        max_cost_usd: { type: number, minimum: 0 }
+        min_context_tokens: { type: integer, minimum: 0 }
+
+    ModelOperation:
+      type: string
+      enum: [chat, embed]
+
+    ModelInvokeRequest:
+      type: object
+      required: [auth, request]
+      additionalProperties: false
+      properties:
+        auth: { $ref: "#/components/schemas/AuthContext" }
+        request: { $ref: "#/components/schemas/ModelRequest" }
+        traceparent: { type: string }
+
+    ModelRequest:
+      type: object
+      required: [request_id, operation, model_ref]
+      additionalProperties: true
+      properties:
+        request_id: { type: string }
+        operation: { $ref: "#/components/schemas/ModelOperation" }
+        model_ref: { type: string, description: "Tier reference or concrete model id." }
+        requirements: { $ref: "#/components/schemas/ModelRequirements" }
+        input:
+          description: Operation-specific input.
+          oneOf:
+            - $ref: "#/components/schemas/ChatInput"
+            - $ref: "#/components/schemas/EmbeddingInput"
+        generation: { $ref: "#/components/schemas/ChatGeneration" }
+
+    ChatInput:
+      type: object
+      required: [messages]
+      additionalProperties: false
+      properties:
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/ChatMessage" }
+        tools:
+          type: array
+          items: { $ref: "#/components/schemas/ChatTool" }
+        tool_choice:
+          type: string
+          description: "auto|none|specific tool name/id"
+    ChatMessage:
+      type: object
+      required: [role, content]
+      additionalProperties: true
+      properties:
+        role: { type: string, enum: [system, user, assistant, tool] }
+        content: { type: string }
+        name: { type: string }
+
+    ChatTool:
+      type: object
+      required: [tool_id, name, input_schema]
+      additionalProperties: true
+      properties:
+        tool_id: { type: string }
+        name: { type: string }
+        input_schema:
+          type: object
+          additionalProperties: true
+
+    ChatGeneration:
+      type: object
+      additionalProperties: false
+      properties:
+        temperature: { type: number, minimum: 0 }
+        top_p: { type: number, minimum: 0, maximum: 1 }
+        max_output_tokens: { type: integer, minimum: 1 }
+
+    ModelInvokeResponse:
+      type: object
+      required: [response, correlation_id]
+      additionalProperties: false
+      properties:
+        response: { $ref: "#/components/schemas/ModelResponse" }
+        correlation_id: { type: string }
+        traceparent: { type: string }
+
+    ModelResponse:
+      type: object
+      required: [request_id, status, output]
+      additionalProperties: true
+      properties:
+        request_id: { type: string }
+        status: { type: string, enum: [ok, error] }
+        output:
+          oneOf:
+            - $ref: "#/components/schemas/ChatOutput"
+            - $ref: "#/components/schemas/EmbeddingOutput"
+        usage: { $ref: "#/components/schemas/Usage" }
+        latency_ms: { type: integer, minimum: 0 }
+        policy_outcome: { $ref: "#/components/schemas/PolicyOutcome" }
+        route: { $ref: "#/components/schemas/RouteInfo" }
+
+    ChatOutput:
+      type: object
+      required: [type, message]
+      additionalProperties: false
+      properties:
+        type: { type: string, enum: [chat] }
+        message: { $ref: "#/components/schemas/ChatMessage" }
+        tool_calls:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    EmbeddingInput:
+      type: object
+      required: [texts]
+      additionalProperties: false
+      properties:
+        texts:
+          type: array
+          items: { type: string }
+        encoding_format:
+          type: string
+          enum: [float, base64]
+    EmbeddingOutput:
+      type: object
+      required: [type, embeddings]
+      additionalProperties: false
+      properties:
+        type: { type: string, enum: [embedding] }
+        embeddings:
+          type: array
+          items: { $ref: "#/components/schemas/EmbeddingVector" }
+
+    EmbeddingVector:
+      type: object
+      required: [index, vector]
+      additionalProperties: false
+      properties:
+        index: { type: integer, minimum: 0 }
+        vector:
+          type: array
+          items: { type: number }
+
+    Usage:
+      type: object
+      additionalProperties: false
+      properties:
+        input_tokens: { type: integer, minimum: 0 }
+        output_tokens: { type: integer, minimum: 0 }
+        total_tokens: { type: integer, minimum: 0 }
+
+    PolicyOutcome:
+      type: object
+      required: [decision, reasons, redactions]
+      additionalProperties: false
+      properties:
+        decision: { type: string, enum: [allowed, blocked, redacted] }
+        reasons:
+          type: array
+          items: { type: string }
+        redactions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    RouteInfo:
+      type: object
+      additionalProperties: true
+      properties:
+        backend: { type: string }
+        model: { type: string }
+        node: { type: string }
+        fallback_used: { type: boolean }
+
+    ModelsListResponse:
+      type: object
+      required: [models, correlation_id]
+      additionalProperties: false
+      properties:
+        models:
+          type: array
+          items: { $ref: "#/components/schemas/ModelCapability" }
+        correlation_id: { type: string }
+
+    ModelCapability:
+      type: object
+      required: [model_id, provider, capabilities]
+      additionalProperties: true
+      properties:
+        model_id: { type: string }
+        provider: { type: string }
+        capabilities:
+          type: array
+          items: { type: string, enum: [chat, embed] }
+        max_output_tokens: { type: integer }
+        context_window_tokens: { type: integer }
+
+    # -------------------------
+    # Policy check
+    # -------------------------
+    PolicyCheckRequest:
+      type: object
+      required: [auth, policy_check]
+      additionalProperties: false
+      properties:
+        auth: { $ref: "#/components/schemas/AuthContext" }
+        policy_check: { $ref: "#/components/schemas/PolicyCheck" }
+
+    PolicyCheck:
+      type: object
+      required: [request_id, content, ruleset]
+      additionalProperties: false
+      properties:
+        request_id: { type: string }
+        content: { $ref: "#/components/schemas/ContentObject" }
+        ruleset: { type: string }
+
+    ContentObject:
+      type: object
+      required: [type, text]
+      additionalProperties: false
+      properties:
+        type: { type: string, enum: [text] }
+        text: { type: string }
+
+    PolicyCheckResponse:
+      type: object
+      required: [policy_result, correlation_id]
+      additionalProperties: false
+      properties:
+        policy_result: { $ref: "#/components/schemas/PolicyResult" }
+        correlation_id: { type: string }
+
+    PolicyResult:
+      type: object
+      required: [request_id, decision, reasons, redactions]
+      additionalProperties: false
+      properties:
+        request_id: { type: string }
+        decision: { type: string, enum: [allowed, blocked, redacted] }
+        reasons:
+          type: array
+          items: { type: string }
+        redactions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    # -------------------------
+    # Errors
+    # -------------------------
+    ErrorResponse:
+      type: object
+      required: [error, correlation_id]
+      additionalProperties: false
+      properties:
+        error: { $ref: "#/components/schemas/ErrorObject" }
+        correlation_id: { type: string }
+
+    ErrorObject:
+      type: object
+      required: [code, message, retryable]
+      additionalProperties: false
+      properties:
+        code: { type: string }
+        message: { type: string }
+        retryable: { type: boolean }
+        details:
+          type: object
+          additionalProperties: true

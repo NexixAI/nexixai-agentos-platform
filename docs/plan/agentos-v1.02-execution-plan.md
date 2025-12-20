@@ -9,23 +9,14 @@ It keeps us honest: we move fast **without drifting**.
 **Done**
 - Phase 0: Baseline + rules locked
 - Phase 1: Official design doc (HLD) added
+- Phase 2: Stack B OpenAPI created (aligned to Schemas Appendix Section E)
 
-**In progress / Needs alignment**
-- Phase 2: Stack A OpenAPI drafted — **must be aligned to Schemas Appendix** (request/response shapes, error model, SSE envelope)
+**In progress**
+- Phase 2: Stack A OpenAPI alignment to Schemas Appendix
 
 **Next**
-- Phase 2: Align Stack A OpenAPI to Schemas Appendix (fix drift)
-- Phase 2: Populate Stack B OpenAPI from Schemas Appendix
-- Phase 2: Populate Federation OpenAPI from Schemas Appendix
-
-**Blocked**
-- None
-
-**Notes**
-- We follow `SPEC_AUTHORITY.md` for conflict resolution and “spec-first” discipline.
-- When in doubt: update specs first, then code.
-
----
+- Phase 2: Federation OpenAPI (aligned to Schemas Appendix Section F)
+- Phase 3: Canonical examples (golden payloads)
 
 ## Change control rules (no drift, no thrash)
 
