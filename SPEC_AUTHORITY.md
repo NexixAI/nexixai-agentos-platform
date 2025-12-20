@@ -25,6 +25,12 @@ It exists to prevent “interpretation drift” between specs, code, and generat
    - `docs/api/*/examples/*.json`
    - `tests/conformance/*`
 
+## Process documents (non-normative)
+These help keep execution disciplined but do not override the normative docs above:
+- `docs/plan/agentos-v1.02-execution-plan.md`
+- `docs/plan/progress-log.md`
+- `docs/plan/pr-checklist.md`
+
 ## Conflict resolution (strict)
 
 If documents disagree, the precedence order is:
