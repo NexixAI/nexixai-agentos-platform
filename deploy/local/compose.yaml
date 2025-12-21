@@ -1,0 +1,29 @@
+name: agentos-local
+
+services:
+  stack-a:
+    build:
+      context: ../..
+    command: ["serve","stack-a","--addr",":8081"]
+    ports:
+      - "8081:8081"
+    environment:
+      - AGENTOS_SERVICE=stack-a
+
+  stack-b:
+    build:
+      context: ../..
+    command: ["serve","stack-b","--addr",":8082"]
+    ports:
+      - "8082:8082"
+    environment:
+      - AGENTOS_SERVICE=stack-b
+
+  federation:
+    build:
+      context: ../..
+    command: ["serve","federation","--addr",":8083"]
+    ports:
+      - "8083:8083"
+    environment:
+      - AGENTOS_SERVICE=federation

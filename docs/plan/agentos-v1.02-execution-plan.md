@@ -12,13 +12,14 @@ It keeps us honest: we move fast **without drifting**.
 - Phase 2: OpenAPI populated (Stack A / Stack B / Federation)
 - Phase 3: Canonical examples populated
 - Phase 4: Conformance tests + CI drift gates added
-
-**In progress**
 - Phase 5: Minimal Go scaffolding (servers + handler stubs)
 
-**Next**
-- Expand stub responses to cover additional schema variants as needed
+**In progress**
 - Phase 6: Deployment UX v1 (“one command”)
+
+**Next**
+- Phase 6: expand validate gates and seed behavior as we add real persistence/adapters
+- Phase 7: multi-tenancy + quotas + auditing (enforced)
 
 **Blocked**
 - None
