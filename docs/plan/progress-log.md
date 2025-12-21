@@ -39,3 +39,17 @@ Append-only log of execution progress. Keep entries short and factual.
 
 **Notes**
 - Federation OpenAPI uses external `$ref` to Stack A schemas where possible to reduce drift.
+
+---
+
+## 2025-12-21
+**Completed**
+- Rebaselined contracts: aligned Stack A Tooling/RunOptions/RunContext to match canonical examples.
+- Federation OpenAPI updated to match Schemas Appendix F examples (peer info/capabilities + runs:forward).
+- Conformance runner updated for Stack B schema names and enabled CI workflow drift gate.
+
+**Next**
+- Phase 5: Minimal Go scaffolding (spec-faithful servers + CLI stubs).
+
+**Notes**
+- This commit is intended to make `tests/conformance/run_conformance.py` pass locally and in CI.

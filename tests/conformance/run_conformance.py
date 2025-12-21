@@ -38,8 +38,8 @@ EXAMPLE_MAP = {
     "docs/api/stack-a/examples/event-envelope.json": ("stack-a", "EventEnvelope"),
 
     # Stack B
-    "docs/api/stack-b/examples/chat.request.json": ("stack-b", "ChatRequest"),
-    "docs/api/stack-b/examples/chat.response.json": ("stack-b", "ChatResponse"),
+    "docs/api/stack-b/examples/chat.request.json": ("stack-b", "ModelInvokeRequest"),
+    "docs/api/stack-b/examples/chat.response.json": ("stack-b", "ModelInvokeResponse"),
     "docs/api/stack-b/examples/policy-check.request.json": ("stack-b", "PolicyCheckRequest"),
     "docs/api/stack-b/examples/policy-check.response.json": ("stack-b", "PolicyCheckResponse"),
 
@@ -127,6 +127,12 @@ def _deref_schema(schema: Any, base_file: Path, cache: Dict[Tuple[Path, str], An
         out = {}
         for k, v in schema.items():
             out[k] = _deref_schema(v, base_file, cache, openapi_cache)
+
+        # OpenAPI 3.0 `nullable: true` is not standard JSON Schema; translate it so jsonschema can validate.
+        if out.get("nullable") is True:
+            out.pop("nullable", None)
+            return {"anyOf": [out, {"type": "null"}]}
+
         return out
     if isinstance(schema, list):
         return [_deref_schema(x, base_file, cache, openapi_cache) for x in schema]
