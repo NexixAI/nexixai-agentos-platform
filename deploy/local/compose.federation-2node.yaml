@@ -1,0 +1,100 @@
+name: agentos-federation-2node
+
+# This compose file runs TWO AgentOS nodes on one host for Phase 8 federation testing.
+# It intentionally uses the official golang image + bind-mounts the repo so you do NOT need a Dockerfile.
+#
+# Node A ports: stack-a 8081, stack-b 8082, federation 8083
+# Node B ports: stack-a 8084, stack-b 8085, federation 8086
+
+services:
+  nodea-stack-a:
+    image: golang:1.22
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+    command: ["bash","-lc","go run ./cmd/agentos serve --addr :8081 stack-a"]
+    ports:
+      - "8081:8081"
+    environment:
+      - AGENTOS_SERVICE=stack-a
+      - AGENTOS_DEFAULT_TENANT=tnt_demo
+      - AGENTOS_QUOTA_RUN_CREATE_QPS=10
+      - AGENTOS_QUOTA_CONCURRENT_RUNS=25
+      - AGENTOS_AUDIT_SINK=stdout
+
+  nodea-stack-b:
+    image: golang:1.22
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+    command: ["bash","-lc","go run ./cmd/agentos serve --addr :8082 stack-b"]
+    ports:
+      - "8082:8082"
+    environment:
+      - AGENTOS_SERVICE=stack-b
+      - AGENTOS_DEFAULT_TENANT=tnt_demo
+      - AGENTOS_QUOTA_INVOKE_QPS=20
+      - AGENTOS_AUDIT_SINK=stdout
+
+  nodea-federation:
+    image: golang:1.22
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+    command: ["bash","-lc","go run ./cmd/agentos serve --addr :8083 federation"]
+    ports:
+      - "8083:8083"
+    environment:
+      - AGENTOS_SERVICE=federation
+      - AGENTOS_DEFAULT_TENANT=tnt_demo
+      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_STACK_ID=stk_local_node_a
+      - AGENTOS_ENVIRONMENT=local
+      - AGENTOS_REGION=local
+      - AGENTOS_PEERS_FILE=/workspace/deploy/local/peers.seed.json
+
+  nodeb-stack-a:
+    image: golang:1.22
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+    command: ["bash","-lc","go run ./cmd/agentos serve --addr :8084 stack-a"]
+    ports:
+      - "8084:8084"
+    environment:
+      - AGENTOS_SERVICE=stack-a
+      - AGENTOS_DEFAULT_TENANT=tnt_demo
+      - AGENTOS_QUOTA_RUN_CREATE_QPS=10
+      - AGENTOS_QUOTA_CONCURRENT_RUNS=25
+      - AGENTOS_AUDIT_SINK=stdout
+
+  nodeb-stack-b:
+    image: golang:1.22
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+    command: ["bash","-lc","go run ./cmd/agentos serve --addr :8085 stack-b"]
+    ports:
+      - "8085:8085"
+    environment:
+      - AGENTOS_SERVICE=stack-b
+      - AGENTOS_DEFAULT_TENANT=tnt_demo
+      - AGENTOS_QUOTA_INVOKE_QPS=20
+      - AGENTOS_AUDIT_SINK=stdout
+
+  nodeb-federation:
+    image: golang:1.22
+    working_dir: /workspace
+    volumes:
+      - ../..:/workspace
+    command: ["bash","-lc","go run ./cmd/agentos serve --addr :8086 federation"]
+    ports:
+      - "8086:8086"
+    environment:
+      - AGENTOS_SERVICE=federation
+      - AGENTOS_DEFAULT_TENANT=tnt_demo
+      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_STACK_ID=stk_local_node_b
+      - AGENTOS_ENVIRONMENT=local
+      - AGENTOS_REGION=local
+      - AGENTOS_PEERS_FILE=/workspace/deploy/local/peers.seed.json

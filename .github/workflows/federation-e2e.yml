@@ -1,0 +1,52 @@
+name: Federation E2E
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  federation-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install federation e2e deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tests/federation_e2e/requirements.txt
+
+      - name: Start 2-node federation stack
+        run: |
+          docker compose -f deploy/local/compose.federation-2node.yaml up -d
+          docker compose -f deploy/local/compose.federation-2node.yaml ps
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8083/v1/federation/health >/dev/null; then
+              echo "Federation health OK"
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://localhost:8084/v1/health >/dev/null
+
+      - name: Run federation e2e
+        run: |
+          python tests/federation_e2e/run_federation_e2e.py
+
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          docker compose -f deploy/local/compose.federation-2node.yaml logs --no-color | tail -n 400
+
+      - name: Shutdown
+        if: always()
+        run: |
+          docker compose -f deploy/local/compose.federation-2node.yaml down -v

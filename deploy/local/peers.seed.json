@@ -1,0 +1,38 @@
+{
+  "local": {
+    "stack_id": "stk_local_node_a",
+    "environment": "local",
+    "region": "local",
+    "api_versions": [
+      "v1"
+    ],
+    "endpoints": {
+      "stack_a_base_url": "http://localhost:8081",
+      "stack_b_base_url": "http://localhost:8082"
+    },
+    "build": {
+      "version": "0.0.1-dev",
+      "git_sha": "LOCAL",
+      "timestamp": "2025-12-20T00:00:00Z"
+    }
+  },
+  "peers": [
+    {
+      "stack_id": "stk_local_node_b",
+      "environment": "local",
+      "region": "local",
+      "api_versions": [
+        "v1"
+      ],
+      "endpoints": {
+        "stack_a_base_url": "http://localhost:8084",
+        "stack_b_base_url": "http://localhost:8085"
+      },
+      "build": {
+        "version": "0.0.1-dev",
+        "git_sha": "LOCAL",
+        "timestamp": "2025-12-20T00:00:00Z"
+      }
+    }
+  ]
+}
