@@ -1,13 +1,6 @@
-name: Federation E2E
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-jobs:
-  federation-e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - name: Run Federation E2E via Docker
         run: |
-          docker compose -f deploy/local/compose.federation-2node.yaml up --build --abort-on-container-exit federation-e2e
+          docker compose \
+            -f deploy/local/compose.federation-2node.yaml \
+            -f deploy/local/compose.federation-2node.ADDENDUM.yaml \
+            up --build --abort-on-container-exit federation-e2e
