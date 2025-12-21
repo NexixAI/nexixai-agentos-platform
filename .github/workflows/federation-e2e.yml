@@ -28,14 +28,39 @@ jobs:
 
       - name: Wait for health
         run: |
-          for i in $(seq 1 60); do
-            if curl -fsS http://localhost:8083/v1/federation/health >/dev/null; then
-              echo "Federation health OK"
-              break
+          set -euo pipefail
+
+          # Services are compiled + started via `go run` inside the containers,
+          # so first boot can take longer than typical HTTP health waits.
+          endpoints=(
+            "http://localhost:8081/v1/health"  # nodea stack-a
+            "http://localhost:8082/v1/health"  # nodea stack-b
+            "http://localhost:8083/v1/federation/health"  # nodea federation
+            "http://localhost:8084/v1/health"  # nodeb stack-a
+            "http://localhost:8085/v1/health"  # nodeb stack-b
+            "http://localhost:8086/v1/federation/health"  # nodeb federation
+          )
+
+          ok=0
+          for i in $(seq 1 120); do
+            ok=0
+            for url in "${endpoints[@]}"; do
+              if curl -fsS "$url" >/dev/null; then
+                ok=$((ok+1))
+              fi
+            done
+            echo "Health: $ok/${#endpoints[@]} endpoints ready (attempt $i/120)"
+            if [ "$ok" -eq "${#endpoints[@]}" ]; then
+              echo "All services healthy"
+              exit 0
             fi
-            sleep 1
+            sleep 2
           done
-          curl -fsS http://localhost:8084/v1/health >/dev/null
+
+          echo "Services did not become healthy in time. Dumping docker compose status/logs..."
+          docker compose -f deploy/local/compose.federation-2node.yaml ps || true
+          docker compose -f deploy/local/compose.federation-2node.yaml logs --no-color | tail -n 400 || true
+          exit 1
 
       - name: Run federation e2e
         run: |
