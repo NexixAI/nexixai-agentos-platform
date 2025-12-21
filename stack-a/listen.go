@@ -3,6 +3,9 @@ package stacka
 import "net/http"
 
 func ListenAndServe(addr, version string) error {
-    s := New(version)
-    return http.ListenAndServe(addr, s.Handler())
+	s, err := New(version)
+	if err != nil {
+		return err
+	}
+	return http.ListenAndServe(addr, s.Handler())
 }

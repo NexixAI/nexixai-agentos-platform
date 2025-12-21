@@ -3,6 +3,6 @@ package federation
 import "net/http"
 
 func ListenAndServe(addr, version string) error {
-    s := New(version)
-    return http.ListenAndServe(addr, s.Handler())
+	s := New(version)
+	return http.ListenAndServe(addr, s.Handler())
 }

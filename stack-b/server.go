@@ -8,8 +8,8 @@ import (
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/audit"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/auth"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/httpx"
-	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/metrics"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/quota"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/types"
 )
