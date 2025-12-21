@@ -9,6 +9,10 @@ services:
       - "8081:8081"
     environment:
       - AGENTOS_SERVICE=stack-a
+      - AGENTOS_DEFAULT_TENANT=tnt_demo
+      - AGENTOS_QUOTA_RUN_CREATE_QPS=10
+      - AGENTOS_QUOTA_CONCURRENT_RUNS=25
+      - AGENTOS_AUDIT_SINK=stdout
 
   stack-b:
     build:
@@ -18,6 +22,9 @@ services:
       - "8082:8082"
     environment:
       - AGENTOS_SERVICE=stack-b
+      - AGENTOS_DEFAULT_TENANT=tnt_demo
+      - AGENTOS_QUOTA_INVOKE_QPS=20
+      - AGENTOS_AUDIT_SINK=stdout
 
   federation:
     build:
@@ -27,3 +34,5 @@ services:
       - "8083:8083"
     environment:
       - AGENTOS_SERVICE=federation
+      - AGENTOS_DEFAULT_TENANT=tnt_demo
+      - AGENTOS_AUDIT_SINK=stdout
