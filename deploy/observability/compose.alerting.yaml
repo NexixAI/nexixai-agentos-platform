@@ -18,6 +18,8 @@ services:
       - --storage.tsdb.path=/prometheus
     ports:
       - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
@@ -29,6 +31,8 @@ services:
     image: prom/blackbox-exporter:v0.25.0
     ports:
       - "9115:9115"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
     command:
@@ -38,6 +42,8 @@ services:
     image: prom/alertmanager:v0.27.0
     ports:
       - "9093:9093"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
     command:
