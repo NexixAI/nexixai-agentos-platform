@@ -1,17 +1,67 @@
-# Federation E2E CI Fix Bundle
+# NexixAI AgentOS Platform
 
-This bundle contains two updated files to fix the `federation-e2e` GitHub Actions failure where containers start but `go` is reported as missing.
+AgentOS is a **spec-first, multi-tenant, federated agent platform** built by **NexixAI**.
 
-## What was broken
-- The compose file used `bash -lc ...` to run services. The `-l` (login shell) causes `/etc/profile` to reset `PATH`, dropping `/usr/local/go/bin` on Debian-based images, so `go` becomes `command not found`.
-- The compose file mounted `../..:/workspace`. Docker Compose resolves relative paths from the **project directory** (usually the repo root), so in CI this mounted the wrong host directory.
+This repository is intentionally **documentation-led**. Specs are the source of truth;
+code exists to prove contracts and execution paths, not to outrun the design.
 
-## What changed
-- `deploy/local/compose.federation-2node.yaml`
-  - Uses `command: ["go", ...]` (no login shell)
-  - Uses `volumes: [".:/workspace"]` so it mounts the repo root correctly in CI and locally (when run from repo root).
-- `.github/workflows/federation-e2e.yml`
-  - Improves health waiting and prints logs on failure.
+---
 
-## Apply
-Copy the two files into your repo at the same paths, commit, and re-run the workflow.
+## What This Repo Is
+
+- **Stack A (Agent Core)** — run orchestration, event streaming, lifecycle
+- **Stack B (Model & Policy Runtime)** — model invocation, embeddings, policy
+- **Federation Layer** — connect AgentOS nodes across environments
+- **Operator UX** — one-command deploy, validate, redeploy, nuke
+- **Spec Authority** — PRS, schemas, OpenAPI, conformance tests
+
+---
+
+## Design Principles
+
+- Spec-first, code-second
+- Additive-only `/v1` APIs
+- Multi-tenant by default
+- Federation as a first-class primitive
+- CI-enforced contracts
+
+---
+
+## Repository Layout
+
+```
+/README.md
+/SPEC_AUTHORITY.md
+/AGENTS.md
+
+/docs/
+  api/
+  design/
+  product/
+  plan/
+  templates/
+
+/cmd/agentos/
+/stack-a/
+/stack-b/
+/federation/
+/tests/
+/deploy/
+```
+
+---
+
+## Getting Started
+
+```bash
+agentos up
+agentos validate
+agentos status
+```
+
+---
+
+## Status
+
+**Version:** v1.02  
+**Execution:** Phase 9 complete (hardening baseline)
