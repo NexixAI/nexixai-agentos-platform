@@ -45,7 +45,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Println(`agentos (Phase 7 multi-tenancy scaffold)
+	fmt.Print(`agentos (Phase 7 multi-tenancy scaffold)
 Usage:
   agentos serve <stack-a|stack-b|federation> [--addr :PORT]
   agentos up [--compose-file PATH] [--project NAME] [--tenant TENANT] [--principal PRINCIPAL]
@@ -76,8 +76,8 @@ func newRunner(composeFile, project string) deploy.ComposeRunner {
 	return deploy.ComposeRunner{
 		ComposeFile: composeFile,
 		ProjectName: project,
-		Stdout: func(s string) { log.Println(s) },
-		Stderr: func(s string) { log.Println(s) },
+		Stdout:      func(s string) { log.Println(s) },
+		Stderr:      func(s string) { log.Println(s) },
 	}
 }
 

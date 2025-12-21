@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 )
 
 type Forwarder struct {
-	Client *http.Client
+	Client      *http.Client
 	MaxAttempts int
 	BaseBackoff time.Duration
 }

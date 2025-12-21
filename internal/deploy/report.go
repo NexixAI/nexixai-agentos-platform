@@ -1,66 +1,60 @@
-    package deploy
+package deploy
 
-    import (
-        "encoding/json"
-        "fmt"
-        "os"
-        "path/filepath"
-        "time"
-    )
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+)
 
-    type CheckResult struct {
-        Name    string `json:"name"`
-        OK      bool   `json:"ok"`
-        Detail  string `json:"detail,omitempty"`
-        URL     string `json:"url,omitempty"`
-        LatencyMs int  `json:"latency_ms,omitempty"`
-    }
+type CheckResult struct {
+	Name      string `json:"name"`
+	OK        bool   `json:"ok"`
+	Detail    string `json:"detail,omitempty"`
+	URL       string `json:"url,omitempty"`
+	LatencyMs int    `json:"latency_ms,omitempty"`
+}
 
-    type Summary struct {
-        Timestamp string        `json:"timestamp"`
-        Mode      string        `json:"mode"`
-        Endpoints map[string]string `json:"endpoints"`
-        Checks    []CheckResult `json:"checks"`
-    }
+type Summary struct {
+	Timestamp string            `json:"timestamp"`
+	Mode      string            `json:"mode"`
+	Endpoints map[string]string `json:"endpoints"`
+	Checks    []CheckResult     `json:"checks"`
+}
 
-    func WriteSummary(dir string, s Summary) error {
-        s.Timestamp = time.Now().UTC().Format(time.RFC3339)
-        // JSON
-        jb, err := json.MarshalIndent(s, "", "  ")
-        if err != nil {
-            return err
-        }
-        if err := os.WriteFile(filepath.Join(dir, "summary.json"), jb, 0o644); err != nil {
-            return err
-        }
+func WriteSummary(dir string, s Summary) error {
+	s.Timestamp = time.Now().UTC().Format(time.RFC3339)
 
-        // Markdown
-        md := "# AgentOS Deployment Summary
+	// JSON
+	jb, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(filepath.Join(dir, "summary.json"), jb, 0o644); err != nil {
+		return err
+	}
 
-"
-        md += fmt.Sprintf("- Timestamp: `%s`
-", s.Timestamp)
-        md += fmt.Sprintf("- Mode: `%s`
+	// Markdown
+	var md strings.Builder
+	md.WriteString("# AgentOS Deployment Summary\n\n")
+	md.WriteString(fmt.Sprintf("- Timestamp: `%s`\n", s.Timestamp))
+	md.WriteString(fmt.Sprintf("- Mode: `%s`\n\n", s.Mode))
 
-", s.Mode)
+	md.WriteString("## Endpoints\n")
+	for k, v := range s.Endpoints {
+		md.WriteString(fmt.Sprintf("- **%s**: %s\n", k, v))
+	}
 
-        md += "## Endpoints
-"
-        for k, v := range s.Endpoints {
-            md += fmt.Sprintf("- **%s**: %s
-", k, v)
-        }
-        md += "
-## Checks
-"
-        for _, c := range s.Checks {
-            status := "✅"
-            if !c.OK {
-                status = "❌"
-            }
-            md += fmt.Sprintf("- %s **%s** (%s) — %s (%dms)
-", status, c.Name, c.URL, c.Detail, c.LatencyMs)
-        }
+	md.WriteString("\n## Checks\n")
+	for _, c := range s.Checks {
+		status := "ok"
+		if !c.OK {
+			status = "fail"
+		}
+		md.WriteString(fmt.Sprintf("- %s **%s** (%s) - %s (%dms)\n", status, c.Name, c.URL, c.Detail, c.LatencyMs))
+	}
 
-        return os.WriteFile(filepath.Join(dir, "summary.md"), []byte(md), 0o644)
-    }
+	return os.WriteFile(filepath.Join(dir, "summary.md"), []byte(md.String()), 0o644)
+}

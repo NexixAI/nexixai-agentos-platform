@@ -20,25 +20,32 @@ func NewSSEProxy() *SSEProxy {
 
 // Proxy streams SSE from remote to the client, with lightweight event_id dedupe per-connection.
 func (p *SSEProxy) Proxy(w http.ResponseWriter, remoteEventsURL string, tenantID string, principalID string, fromSequence int) error {
-	req, _ := http.NewRequest("GET", remoteEventsURL, nil)
+	req, err := http.NewRequest("GET", remoteEventsURL, nil)
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Accept", "text/event-stream")
 	req.Header.Set("X-Tenant-Id", tenantID)
 	if principalID != "" {
 		req.Header.Set("X-Principal-Id", principalID)
 	}
 
-	resp, err := p.Client.Do(req)
-		if err != nil {
-			lastErr = err
-			time.Sleep(time.Duration(attempt) * 200 * time.Millisecond)
-			continue
+	var (
+		resp    *http.Response
+		lastErr error
+	)
+	for attempt := 1; attempt <= 3; attempt++ {
+		resp, err = p.Client.Do(req)
+		if err == nil {
+			break
 		}
-	defer resp.Body.Close()
-		break
+		lastErr = err
+		time.Sleep(time.Duration(attempt) * 200 * time.Millisecond)
 	}
-	if lastErr != nil {
+	if err != nil {
 		return lastErr
 	}
+	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("remote events returned %s", resp.Status)
@@ -54,7 +61,7 @@ func (p *SSEProxy) Proxy(w http.ResponseWriter, remoteEventsURL string, tenantID
 	}
 
 	seen := map[string]struct{}{}
-	lastSeq := 0
+	lastSeq := fromSequence
 
 	reader := bufio.NewReader(resp.Body)
 	bw := bufio.NewWriter(w)

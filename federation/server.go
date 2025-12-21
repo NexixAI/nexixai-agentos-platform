@@ -10,8 +10,8 @@ import (
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/audit"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/auth"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/httpx"
-	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/metrics"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
 )
 
 type Server struct {
@@ -184,7 +184,7 @@ func (s *Server) handleForwardRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.index.Put(tenantID, remoteRunID, peer.StackID, remoteEventsURL)
+	s.index.Set(tenantID, remoteRunID, peer.StackID, remoteEventsURL)
 
 	resp := map[string]any{
 		"forwarded": map[string]any{
@@ -300,6 +300,13 @@ func (s *Server) handleRunEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	runID := parts[0]
+
+	fromSeq := 0
+	if v := r.URL.Query().Get("from_sequence"); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 {
+			fromSeq = parsed
+		}
+	}
 
 	// Prefer SSE proxy if forwarded.
 	if tgt, ok := s.index.Get(tenantID, runID); ok && tgt.RemoteEventsURL != "" {
