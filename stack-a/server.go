@@ -3,38 +3,41 @@ package stacka
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/audit"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/auth"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/httpx"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/id"
-	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/metrics"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/quota"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/storage"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/types"
 )
 
 type Server struct {
 	version string
 
-	mu   sync.Mutex
-	runs map[string]map[string]types.Run // tenant -> run_id -> run
-
+	runs    storage.RunStore
 	limiter *quota.Limiter
 	audit   audit.Logger
 }
 
-func New(version string) *Server {
+func New(version string) (*Server, error) {
+	runStore, err := storage.NewRunStoreFromEnv()
+	if err != nil {
+		return nil, err
+	}
 	return &Server{
 		version: version,
-		runs:    make(map[string]map[string]types.Run),
+		runs:    runStore,
 		limiter: quota.NewFromEnv("AGENTOS_QUOTA_RUN_CREATE_QPS", "AGENTOS_QUOTA_CONCURRENT_RUNS", 10, 25),
 		audit:   audit.NewFromEnv(),
-	}
+	}, nil
 }
 
 func (s *Server) Handler() http.Handler {
@@ -121,12 +124,23 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 		RunOptions: req.RunOptions,
 	}
 
-	s.mu.Lock()
-	if s.runs[tenantID] == nil {
-		s.runs[tenantID] = make(map[string]types.Run)
+	if err := s.runs.Create(r.Context(), run); err != nil {
+		s.limiter.DecConcurrent(tenantID)
+		code := http.StatusInternalServerError
+		errCode := "run_persist_failed"
+		retryable := true
+		if errors.Is(err, storage.ErrRunExists) {
+			code = http.StatusConflict
+			errCode = "conflict"
+			retryable = false
+		} else if errors.Is(err, storage.ErrInvalidRun) {
+			code = http.StatusBadRequest
+			errCode = "invalid_request"
+			retryable = false
+		}
+		httpx.Error(w, code, errCode, "failed to persist run", httpx.CorrelationID(r), retryable)
+		return
 	}
-	s.runs[tenantID][runID] = run
-	s.mu.Unlock()
 
 	s.audit.Log(audit.Entry{
 		TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "runs.create", Resource: "run/" + runID, Outcome: "allowed",
@@ -164,30 +178,42 @@ func (s *Server) handleRuns(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.mu.Lock()
-	run, ok := s.runs[tenantID][runID]
-	s.mu.Unlock()
+	run, ok, err := s.runs.Get(r.Context(), tenantID, runID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "run_lookup_failed", "failed to load run", httpx.CorrelationID(r), true)
+		return
+	}
 	if !ok {
 		httpx.Error(w, http.StatusNotFound, "not_found", "run not found", httpx.CorrelationID(r), false)
 		return
 	}
 
 	// For scaffold: auto-progress and auto-complete after ~5s
-	created, _ := time.Parse(time.RFC3339, run.CreatedAt)
-	age := time.Since(created)
-	if run.Status == "queued" && age > 1*time.Second {
-		run.Status = "running"
-	}
-	if (run.Status == "running" || run.Status == "queued") && age > 5*time.Second {
-		run.Status = "completed"
-		run.CompletedAt = time.Now().UTC().Format(time.RFC3339)
-		s.limiter.DecConcurrent(tenantID)
-		run.Output = &types.RunOutput{Type: "text", Text: "stub completed output"}
+	updated := false
+	if created, err := time.Parse(time.RFC3339, run.CreatedAt); err == nil {
+		age := time.Since(created)
+		if run.Status == "queued" && age > 1*time.Second {
+			run.Status = "running"
+			if run.StartedAt == "" {
+				run.StartedAt = time.Now().UTC().Format(time.RFC3339)
+			}
+			updated = true
+		}
+		if (run.Status == "running" || run.Status == "queued") && age > 5*time.Second {
+			run.Status = "completed"
+			run.CompletedAt = time.Now().UTC().Format(time.RFC3339)
+			s.limiter.DecConcurrent(tenantID)
+			run.Output = &types.RunOutput{Type: "text", Text: "stub completed output"}
+			updated = true
+		}
 	}
 
-	s.mu.Lock()
-	s.runs[tenantID][runID] = run
-	s.mu.Unlock()
+	if updated {
+		if err := s.runs.Save(r.Context(), run); err != nil {
+			httpx.Error(w, http.StatusInternalServerError, "run_persist_failed", "failed to persist run update", httpx.CorrelationID(r), true)
+			return
+		}
+	}
 
 	resp := types.RunGetResponse{Run: run, CorrelationID: httpx.CorrelationID(r)}
 	httpx.JSON(w, http.StatusOK, resp)
@@ -199,9 +225,11 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request, tenantID, 
 		return
 	}
 
-	s.mu.Lock()
-	run, ok := s.runs[tenantID][runID]
-	s.mu.Unlock()
+	run, ok, err := s.runs.Get(r.Context(), tenantID, runID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "run_lookup_failed", "failed to load run", httpx.CorrelationID(r), true)
+		return
+	}
 	if !ok {
 		httpx.Error(w, http.StatusNotFound, "not_found", "run not found", httpx.CorrelationID(r), false)
 		return
@@ -223,12 +251,12 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request, tenantID, 
 			Sequence: 1,
 			Time:     time.Now().UTC().Format(time.RFC3339),
 			Type:     "agentos.run.step.completed",
-			TenantID:  run.TenantID,
-			AgentID:   run.AgentID,
-			RunID:     run.RunID,
-			StepID:    "step_1",
-			Trace:     types.TraceContext{Traceparent: "00-00000000000000000000000000000000-0000000000000000-01"},
-			Payload:   map[string]any{"status": "ok"},
+			TenantID: run.TenantID,
+			AgentID:  run.AgentID,
+			RunID:    run.RunID,
+			StepID:   "step_1",
+			Trace:    types.TraceContext{Traceparent: "00-00000000000000000000000000000000-0000000000000000-01"},
+			Payload:  map[string]any{"status": "ok"},
 		},
 	}
 

@@ -12,7 +12,8 @@ services:
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_RUN_CREATE_QPS=10
       - AGENTOS_QUOTA_CONCURRENT_RUNS=25
-      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_RUN_STORE_FILE=/workspace/data/stack-a/runs.json
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/stack-a/audit.log
 
   stack-b:
     build:
@@ -24,7 +25,7 @@ services:
       - AGENTOS_SERVICE=stack-b
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_INVOKE_QPS=20
-      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/stack-b/audit.log
 
   federation:
     build:
@@ -35,4 +36,5 @@ services:
     environment:
       - AGENTOS_SERVICE=federation
       - AGENTOS_DEFAULT_TENANT=tnt_demo
-      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_FED_FORWARD_INDEX_FILE=/workspace/data/federation/forward-index.json
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/federation/audit.log

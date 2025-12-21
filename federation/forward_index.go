@@ -24,9 +24,9 @@ type forwardIndex struct {
 }
 
 type forwardIndexRecord struct {
-	TenantID       string `json:"tenant_id"`
-	RunID          string `json:"run_id"`
-	RemoteStackID  string `json:"remote_stack_id"`
+	TenantID        string `json:"tenant_id"`
+	RunID           string `json:"run_id"`
+	RemoteStackID   string `json:"remote_stack_id"`
 	RemoteEventsURL string `json:"remote_events_url"`
 }
 

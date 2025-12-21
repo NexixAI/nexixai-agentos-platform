@@ -24,7 +24,8 @@ services:
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_RUN_CREATE_QPS=10
       - AGENTOS_QUOTA_CONCURRENT_RUNS=25
-      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_RUN_STORE_FILE=/workspace/data/nodea/stack-a/runs.json
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodea/stack-a/audit.log
 
   nodea-stack-b:
     image: golang:1.22
@@ -40,7 +41,7 @@ services:
       - AGENTOS_SERVICE=stack-b
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_INVOKE_QPS=20
-      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodea/stack-b/audit.log
 
   nodea-federation:
     image: golang:1.22
@@ -55,7 +56,8 @@ services:
     environment:
       - AGENTOS_SERVICE=federation
       - AGENTOS_DEFAULT_TENANT=tnt_demo
-      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_FED_FORWARD_INDEX_FILE=/workspace/data/nodea/federation/forward-index.json
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodea/federation/audit.log
       - AGENTOS_STACK_ID=stk_local_node_a
       - AGENTOS_ENVIRONMENT=local
       - AGENTOS_REGION=local
@@ -76,7 +78,8 @@ services:
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_RUN_CREATE_QPS=10
       - AGENTOS_QUOTA_CONCURRENT_RUNS=25
-      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_RUN_STORE_FILE=/workspace/data/nodeb/stack-a/runs.json
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodeb/stack-a/audit.log
 
   nodeb-stack-b:
     image: golang:1.22
@@ -92,7 +95,7 @@ services:
       - AGENTOS_SERVICE=stack-b
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_INVOKE_QPS=20
-      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodeb/stack-b/audit.log
 
   nodeb-federation:
     image: golang:1.22
@@ -107,7 +110,8 @@ services:
     environment:
       - AGENTOS_SERVICE=federation
       - AGENTOS_DEFAULT_TENANT=tnt_demo
-      - AGENTOS_AUDIT_SINK=stdout
+      - AGENTOS_FED_FORWARD_INDEX_FILE=/workspace/data/nodeb/federation/forward-index.json
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodeb/federation/audit.log
       - AGENTOS_STACK_ID=stk_local_node_b
       - AGENTOS_ENVIRONMENT=local
       - AGENTOS_REGION=local

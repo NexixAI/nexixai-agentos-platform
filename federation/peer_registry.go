@@ -8,12 +8,12 @@ import (
 )
 
 type PeerInfo struct {
-	StackID      string   `json:"stack_id"`
-	Environment  string   `json:"environment"`
-	Region       string   `json:"region"`
-	APIVersions  []string `json:"api_versions"`
-	Endpoints    Endpoints `json:"endpoints"`
-	Build        Build     `json:"build"`
+	StackID     string    `json:"stack_id"`
+	Environment string    `json:"environment"`
+	Region      string    `json:"region"`
+	APIVersions []string  `json:"api_versions"`
+	Endpoints   Endpoints `json:"endpoints"`
+	Build       Build     `json:"build"`
 }
 
 type Endpoints struct {
@@ -28,7 +28,7 @@ type Build struct {
 }
 
 type PeersFile struct {
-	Local PeerInfo  `json:"local"`
+	Local PeerInfo   `json:"local"`
 	Peers []PeerInfo `json:"peers"`
 }
 

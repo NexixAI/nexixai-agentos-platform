@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -43,11 +44,19 @@ func (l *jsonLineLogger) Log(e Entry) {
 // NewFromEnv creates an audit logger.
 //
 // AGENTOS_AUDIT_SINK:
-//   - "stdout" (default)
+//   - "stdout"
 //   - "stderr"
-//   - "file:/path/to/audit.log"
+//   - "file:/path/to/audit.log" (default; falls back to data/audit/{service}.audit.log)
 func NewFromEnv() Logger {
 	sink := strings.TrimSpace(os.Getenv("AGENTOS_AUDIT_SINK"))
+	if sink == "" {
+		svc := strings.TrimSpace(os.Getenv("AGENTOS_SERVICE"))
+		name := "audit.log"
+		if svc != "" {
+			name = svc + ".audit.log"
+		}
+		sink = "file:" + filepath.Join("data", "audit", name)
+	}
 	if sink == "" || sink == "stdout" {
 		return &jsonLineLogger{w: os.Stdout}
 	}
@@ -67,9 +76,8 @@ func NewFromEnv() Logger {
 }
 
 func dir(p string) string {
-	i := strings.LastIndex(p, "/")
-	if i <= 0 {
+	if p == "" {
 		return "."
 	}
-	return p[:i]
+	return filepath.Dir(p)
 }
