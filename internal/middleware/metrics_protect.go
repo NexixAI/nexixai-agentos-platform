@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/auth"
@@ -15,8 +16,14 @@ func ProtectMetrics(next http.Handler) http.Handler {
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ac, _ := auth.Get(r.Context())
-		if _, ok := auth.RequireTenant(ac); !ok {
-			httpx.Error(w, http.StatusUnauthorized, "unauthorized", "tenant_id required", httpx.CorrelationID(r), false)
+		if _, err := auth.RequireTenant(ac); err != nil {
+			code := http.StatusUnauthorized
+			errCode := "unauthorized"
+			if errors.Is(err, auth.ErrTenantMismatch) {
+				code = http.StatusBadRequest
+				errCode = "tenant_mismatch"
+			}
+			httpx.Error(w, code, errCode, err.Error(), httpx.CorrelationID(r), false)
 			return
 		}
 		next.ServeHTTP(w, r)

@@ -22,7 +22,7 @@ func NewForwarder() *Forwarder {
 }
 
 // ForwardRun calls the remote Stack A Run Create endpoint and returns (remote_run_id, remote_events_url, status).
-func (f *Forwarder) ForwardRun(remoteStackABaseURL string, agentID string, tenantID string, principalID string, runCreateReq map[string]any) (string, string, string, error) {
+func (f *Forwarder) ForwardRun(remoteStackABaseURL string, agentID string, tenantID string, principalID string, bearerToken string, runCreateReq map[string]any) (string, string, string, error) {
 	url := strings.TrimRight(remoteStackABaseURL, "/") + "/v1/agents/" + agentID + "/runs"
 
 	body, _ := json.Marshal(runCreateReq)
@@ -31,6 +31,9 @@ func (f *Forwarder) ForwardRun(remoteStackABaseURL string, agentID string, tenan
 	req.Header.Set("X-Tenant-Id", tenantID)
 	if principalID != "" {
 		req.Header.Set("X-Principal-Id", principalID)
+	}
+	if bearerToken != "" {
+		req.Header.Set("Authorization", "Bearer "+bearerToken)
 	}
 
 	resp, err := f.Client.Do(req)
