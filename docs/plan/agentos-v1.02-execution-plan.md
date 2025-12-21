@@ -9,12 +9,16 @@ It keeps us honest: we move fast **without drifting**.
 **Done**
 - Phase 0: Baseline + rules locked
 - Phase 1: Official design doc (HLD) added
-- Phase 2: Stack A/B/Federation OpenAPI populated and aligned to Schemas Appendix examples
-- Phase 3: Canonical examples populated (Stack A/B/Federation)
-- Phase 4: Conformance tests + GitHub Actions workflow added (drift gates)
+- Phase 2: OpenAPI populated (Stack A / Stack B / Federation)
+- Phase 3: Canonical examples populated
+- Phase 4: Conformance tests + CI drift gates added
+
+**In progress**
+- Phase 5: Minimal Go scaffolding (servers + handler stubs)
 
 **Next**
-- Phase 5: Minimal Go scaffolding that matches the spec (servers + handlers stubs)
+- Expand stub responses to cover additional schema variants as needed
+- Phase 6: Deployment UX v1 (“one command”)
 
 **Blocked**
 - None

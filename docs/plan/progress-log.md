@@ -53,3 +53,17 @@ Append-only log of execution progress. Keep entries short and factual.
 
 **Notes**
 - This commit is intended to make `tests/conformance/run_conformance.py` pass locally and in CI.
+
+---
+
+## 2025-12-21
+**Completed**
+- Phase 5: Added minimal Go scaffolding (`cmd/agentos` CLI + Stack A/Stack B/Federation HTTP servers) with schema-conformant stub responses.
+
+**Next**
+- Wire persistence (run state + event store) behind ports/adapters.
+- Add basic auth context parsing + tenant propagation.
+- Phase 6: operator UX (`agentos up|validate|status|nuke`) once runtime wiring is chosen.
+
+**Notes**
+- Stubs are intentionally simple; contract fidelity is enforced by Phase 4 conformance gates (examples/spec), and runtime handlers return payloads that conform to the OpenAPI shapes.
