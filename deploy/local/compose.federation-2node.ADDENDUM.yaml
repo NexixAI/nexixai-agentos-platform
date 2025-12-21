@@ -1,0 +1,11 @@
+  federation-e2e:
+    build:
+      context: .
+      dockerfile: tests/federation_e2e/Dockerfile.e2e
+    depends_on:
+      - nodea-stack-a
+      - nodea-stack-b
+      - nodea-federation
+      - nodeb-stack-a
+      - nodeb-stack-b
+      - nodeb-federation
