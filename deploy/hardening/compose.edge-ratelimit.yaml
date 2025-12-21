@@ -1,0 +1,31 @@
+name: agentos-edge
+
+# Phase 9: Nginx "edge" that applies basic rate limiting in front of each service.
+# This is intentionally minimal and opt-in: it does not replace your future gateway story.
+#
+# Exposes:
+#   - stack-a edge:     http://localhost:9081  -> http://localhost:8081
+#   - stack-b edge:     http://localhost:9082  -> http://localhost:8082
+#   - federation edge:  http://localhost:9083  -> http://localhost:8083
+
+services:
+  edge-stack-a:
+    image: nginx:1.27-alpine
+    ports:
+      - "9081:80"
+    volumes:
+      - ./nginx/stack-a.conf:/etc/nginx/conf.d/default.conf:ro
+
+  edge-stack-b:
+    image: nginx:1.27-alpine
+    ports:
+      - "9082:80"
+    volumes:
+      - ./nginx/stack-b.conf:/etc/nginx/conf.d/default.conf:ro
+
+  edge-federation:
+    image: nginx:1.27-alpine
+    ports:
+      - "9083:80"
+    volumes:
+      - ./nginx/federation.conf:/etc/nginx/conf.d/default.conf:ro

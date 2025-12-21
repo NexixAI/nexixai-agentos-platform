@@ -1,0 +1,33 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default-webhook
+  group_by: ["alertname", "instance"]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 30m
+
+receivers:
+  - name: default-webhook
+    webhook_configs:
+      - url: http://alertlogger:8080/
+        send_resolved: true
+
+# ---- SMTP EMAIL (optional) ----
+# If you want real email, uncomment and fill in:
+#
+# global:
+#   smtp_smarthost: "smtp.gmail.com:587"
+#   smtp_from: "you@example.com"
+#   smtp_auth_username: "you@example.com"
+#   smtp_auth_password: "app-password-here"
+#
+# receivers:
+#   - name: email
+#     email_configs:
+#       - to: "you@example.com"
+#         send_resolved: true
+#
+# route:
+#   receiver: email

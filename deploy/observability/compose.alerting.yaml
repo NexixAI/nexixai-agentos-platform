@@ -1,0 +1,53 @@
+name: agentos-alerting
+
+# Phase 9: minimal alerting stack that does NOT require app /metrics.
+# Uses Prometheus + Blackbox Exporter to probe HTTP health endpoints.
+#
+# Defaults:
+#   - Prometheus:   http://localhost:9090
+#   - Alertmanager: http://localhost:9093
+#
+# To wire SMTP email, edit deploy/observability/alertmanager/alertmanager.yml
+# (see docs/dev/phase9-hardening.md)
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    depends_on:
+      - blackbox
+      - alertmanager
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.25.0
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./blackbox/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command:
+      - --config.file=/etc/blackbox_exporter/config.yml
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+
+  # Default "alarm sink" that just prints alerts to stdout so you get signal out-of-the-box.
+  # Replace with SMTP/email in alertmanager.yml when ready.
+  alertlogger:
+    image: mendhak/http-https-echo:33
+    ports:
+      - "8089:8080"
+    environment:
+      - HTTP_PORT=8080

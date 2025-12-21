@@ -1,0 +1,20 @@
+groups:
+  - name: agentos-baseline
+    rules:
+      - alert: AgentOSServiceDown
+        expr: probe_success == 0
+        for: 60s
+        labels:
+          severity: page
+        annotations:
+          summary: "AgentOS service appears down"
+          description: "Blackbox probe failed for {{ $labels.instance }} (job={{ $labels.job }})"
+
+      - alert: AgentOSServiceSlow
+        expr: probe_duration_seconds > 2
+        for: 2m
+        labels:
+          severity: warn
+        annotations:
+          summary: "AgentOS service is slow"
+          description: "Probe duration {{ $value }}s for {{ $labels.instance }}"
