@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/audit"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/auth"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/httpx"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/metrics"
 )
 
 type Server struct {
@@ -26,12 +28,16 @@ type Server struct {
 
 func New(version string) *Server {
 	reg, _ := LoadRegistryFromEnv()
+	idxPath := os.Getenv("AGENTOS_FED_FORWARD_INDEX_FILE")
+	if idxPath == "" {
+		idxPath = "data/federation/forward-index.json"
+	}
 	return &Server{
 		version:  version,
 		registry: reg,
 		forward:  NewForwarder(),
 		proxy:    NewSSEProxy(),
-		index:    newForwardIndex(),
+		index:    newForwardIndexPersistent(idxPath),
 		events:   newEventStore(),
 		audit:    audit.NewFromEnv(),
 	}
@@ -47,9 +53,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/federation/runs:forward", s.handleForwardRun)
 	mux.HandleFunc("/v1/federation/runs/", s.handleRunEvents) // /v1/federation/runs/{run_id}/events
 	mux.HandleFunc("/v1/federation/events:ingest", s.handleEventsIngest)
+	mux.Handle("/metrics", middleware.ProtectMetrics(metrics.Handler()))
 
 	h := middleware.WithAuth(mux)
 	h = middleware.EnsureRequestID(h)
+	h = metrics.Instrument("federation", h)
 	return h
 }
 
@@ -171,6 +179,7 @@ func (s *Server) handleForwardRun(w http.ResponseWriter, r *http.Request) {
 
 	remoteRunID, remoteEventsURL, status, err := s.forward.ForwardRun(peer.Endpoints.StackABaseURL, agentID, tenantID, principalPayload, runCreate)
 	if err != nil {
+		metrics.IncFederationForwardFailure("federation", "forward_run_failed")
 		httpx.Error(w, http.StatusBadGateway, "forward_failed", err.Error(), httpx.CorrelationID(r), true)
 		return
 	}
@@ -294,7 +303,8 @@ func (s *Server) handleRunEvents(w http.ResponseWriter, r *http.Request) {
 
 	// Prefer SSE proxy if forwarded.
 	if tgt, ok := s.index.Get(tenantID, runID); ok && tgt.RemoteEventsURL != "" {
-		if err := s.proxy.Proxy(w, tgt.RemoteEventsURL, tenantID, ac.PrincipalID); err != nil {
+		if err := s.proxy.Proxy(w, tgt.RemoteEventsURL, tenantID, ac.PrincipalID, fromSeq); err != nil {
+			metrics.IncFederationForwardFailure("federation", "events_proxy_failed")
 			httpx.Error(w, http.StatusBadGateway, "events_proxy_failed", err.Error(), httpx.CorrelationID(r), true)
 		}
 		return

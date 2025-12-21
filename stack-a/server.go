@@ -13,6 +13,7 @@ import (
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/httpx"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/id"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/metrics"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/quota"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/types"
 )
@@ -41,9 +42,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/health", s.handleHealth)
 	mux.HandleFunc("/v1/agents/", s.handleAgents) // /v1/agents/{agent_id}/runs
 	mux.HandleFunc("/v1/runs/", s.handleRuns)     // /v1/runs/{run_id} and /v1/runs/{run_id}/events
+	mux.Handle("/metrics", middleware.ProtectMetrics(metrics.Handler()))
 
 	h := middleware.WithAuth(mux)
 	h = middleware.EnsureRequestID(h)
+	h = metrics.Instrument("stack-a", h)
 	return h
 }
 
@@ -69,6 +72,7 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !s.limiter.AllowQPS(tenantID) {
+		metrics.IncQuotaDenied("stack-a", "runs_create_qps")
 		httpx.Error(w, http.StatusTooManyRequests, "quota_exceeded", "run create QPS exceeded", httpx.CorrelationID(r), true)
 		s.audit.Log(audit.Entry{
 			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "runs.create", Resource: "stack-a", Outcome: "denied",
@@ -78,6 +82,7 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !s.limiter.TryIncConcurrent(tenantID) {
+		metrics.IncQuotaDenied("stack-a", "runs_concurrency")
 		httpx.Error(w, http.StatusTooManyRequests, "quota_exceeded", "concurrent runs exceeded", httpx.CorrelationID(r), true)
 		s.audit.Log(audit.Entry{
 			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "runs.create", Resource: "stack-a", Outcome: "denied",

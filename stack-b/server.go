@@ -9,6 +9,7 @@ import (
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/auth"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/httpx"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/metrics"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/quota"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/types"
 )
@@ -33,9 +34,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/models", s.handleModels)
 	mux.HandleFunc("/v1/models:invoke", s.handleInvoke)
 	mux.HandleFunc("/v1/policy:check", s.handlePolicyCheck)
+	mux.Handle("/metrics", middleware.ProtectMetrics(metrics.Handler()))
 
 	h := middleware.WithAuth(mux)
 	h = middleware.EnsureRequestID(h)
+	h = metrics.Instrument("stack-b", h)
 	return h
 }
 
@@ -78,6 +81,7 @@ func (s *Server) handleInvoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !s.limiter.AllowQPS(tenantID) {
+		metrics.IncQuotaDenied("stack-b", "models_invoke_qps")
 		httpx.Error(w, http.StatusTooManyRequests, "quota_exceeded", "invoke QPS exceeded", httpx.CorrelationID(r), true)
 		s.audit.Log(audit.Entry{
 			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "models.invoke", Resource: "stack-b", Outcome: "denied",

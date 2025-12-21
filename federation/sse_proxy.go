@@ -19,7 +19,7 @@ func NewSSEProxy() *SSEProxy {
 }
 
 // Proxy streams SSE from remote to the client, with lightweight event_id dedupe per-connection.
-func (p *SSEProxy) Proxy(w http.ResponseWriter, remoteEventsURL string, tenantID string, principalID string) error {
+func (p *SSEProxy) Proxy(w http.ResponseWriter, remoteEventsURL string, tenantID string, principalID string, fromSequence int) error {
 	req, _ := http.NewRequest("GET", remoteEventsURL, nil)
 	req.Header.Set("Accept", "text/event-stream")
 	req.Header.Set("X-Tenant-Id", tenantID)
@@ -28,10 +28,17 @@ func (p *SSEProxy) Proxy(w http.ResponseWriter, remoteEventsURL string, tenantID
 	}
 
 	resp, err := p.Client.Do(req)
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			lastErr = err
+			time.Sleep(time.Duration(attempt) * 200 * time.Millisecond)
+			continue
+		}
 	defer resp.Body.Close()
+		break
+	}
+	if lastErr != nil {
+		return lastErr
+	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("remote events returned %s", resp.Status)

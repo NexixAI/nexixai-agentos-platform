@@ -18,3 +18,45 @@ groups:
         annotations:
           summary: "AgentOS service is slow"
           description: "Probe duration {{ $value }}s for {{ $labels.instance }}"
+
+- alert: AgentOSHigh5xxRate
+  expr: |
+    (
+      sum(rate(agentos_http_requests_total{code=~"5.."}[5m])) 
+      /
+      clamp_min(sum(rate(agentos_http_requests_total[5m])), 1)
+    ) > 0.05
+  for: 5m
+  labels:
+    severity: page
+  annotations:
+    summary: "High 5xx rate across AgentOS services"
+    description: "5xx ratio > 5% over 5m. Investigate logs/correlation IDs."
+
+- alert: AgentOSHighP95Latency
+  expr: |
+    histogram_quantile(0.95, sum(rate(agentos_http_request_duration_seconds_bucket[5m])) by (le)) > 1
+  for: 10m
+  labels:
+    severity: warn
+  annotations:
+    summary: "High p95 latency across AgentOS services"
+    description: "p95 > 1s over 10m. Consider resource pressure or downstream slowness."
+
+- alert: AgentOSQuotaDenialsSpiking
+  expr: sum(rate(agentos_quota_denied_total[5m])) > 5
+  for: 10m
+  labels:
+    severity: warn
+  annotations:
+    summary: "Quota denials spiking"
+    description: "Quota denials > 5/min over 10m. Check tenant activity and limits."
+
+- alert: AgentOSFederationForwardFailures
+  expr: sum(rate(agentos_federation_forward_failures_total[5m])) > 0
+  for: 5m
+  labels:
+    severity: warn
+  annotations:
+    summary: "Federation forward failures detected"
+    description: "Federation forward failures > 0 over 5m. Check peer reachability and Stack A health."
