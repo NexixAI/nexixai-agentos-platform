@@ -4,23 +4,31 @@ import os
 import time
 import requests
 
-NODEA_FED = os.getenv("NODEA_FED", "http://localhost:8083")
-NODEB_STACKA = os.getenv("NODEB_STACKA", "http://localhost:8084")
+NODEA_FED = os.getenv("NODEA_FED", "http://nodea-federation:8083")
+NODEB_FED = os.getenv("NODEB_FED") or os.getenv("NODEB_STACKA") or "http://nodeb-federation:8086"
 
 TENANT = os.getenv("TENANT", "tnt_demo")
 PRINCIPAL = os.getenv("PRINCIPAL", "prn_ci")
 
-def wait_ok(url, timeout=30):
+def wait_ok(url, timeout=60, label=None):
+    label = label or url
+    print(f"Waiting for {label} ...", flush=True)
     t0 = time.time()
+    attempts = 0
+    last_error = None
     while time.time() - t0 < timeout:
+        attempts += 1
         try:
-            r = requests.get(url, headers={"X-Tenant-Id": TENANT, "X-Principal-Id": PRINCIPAL}, timeout=2)
+            r = requests.get(url, headers={"X-Tenant-Id": TENANT, "X-Principal-Id": PRINCIPAL}, timeout=5)
             if r.status_code == 200:
+                elapsed = time.time() - t0
+                print(f"OK: {label} ready after {elapsed:.1f}s", flush=True)
                 return True
-        except Exception:
-            pass
+            last_error = f"status={r.status_code} body={r.text[:200]}"
+        except Exception as exc:
+            last_error = str(exc)
         time.sleep(0.5)
-    raise SystemExit(f"timeout waiting for {url}")
+    raise SystemExit(f"timeout waiting for {label} after {timeout}s (attempts={attempts}); last_error={last_error}")
 
 def read_first_sse_event(url, timeout=10):
     with requests.get(url, headers={"X-Tenant-Id": TENANT, "X-Principal-Id": PRINCIPAL, "Accept": "text/event-stream"}, stream=True, timeout=timeout) as r:
@@ -39,8 +47,8 @@ def read_first_sse_event(url, timeout=10):
 
 def main():
     # Wait for services
-    wait_ok(f"{NODEA_FED}/v1/federation/health")
-    wait_ok(f"{NODEB_STACKA}/v1/health")
+    wait_ok(f"{NODEA_FED}/v1/federation/health", label="node A federation health")
+    wait_ok(f"{NODEB_FED}/v1/federation/health", label="node B federation health")
 
     # Forward a run to node B via node A federation
     fwd = {
