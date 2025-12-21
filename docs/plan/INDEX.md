@@ -1,17 +1,13 @@
 # AgentOS Execution Plan Index
 
-This folder contains the authoritative execution history for AgentOS v1.02.
+## Completed
+Phases 0–9 complete (baseline, federation v1, hardening).
 
-## Phases
-- Phase 0 — Baseline & Authority
-- Phase 1 — Architecture Design
-- Phase 2 — OpenAPI Contracts
-- Phase 3 — Canonical Examples
-- Phase 4 — Conformance & CI
-- Phase 5 — Go Scaffolding
-- Phase 6 — Deployment UX
-- Phase 7 — Multi-tenancy
-- Phase 8 — Federation v1
-- Phase 9 — Hardening Baseline
-
-Last updated: 2025-12-21
+## Forward (Codex Executable)
+- Phase 10 — Persistence
+- Phase 11 — AuthN/AuthZ
+- Phase 12 — Stack B Providers & Policy
+- Phase 13 — Observability
+- Phase 14 — Tenant Admin
+- Phase 15 — Prod Profiles
+- Phase 16 — Hardening v2
