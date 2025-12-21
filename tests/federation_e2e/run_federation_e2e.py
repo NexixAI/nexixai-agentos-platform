@@ -9,8 +9,9 @@ NODEB_FED = os.getenv("NODEB_FED") or os.getenv("NODEB_STACKA") or "http://nodeb
 
 TENANT = os.getenv("TENANT", "tnt_demo")
 PRINCIPAL = os.getenv("PRINCIPAL", "prn_ci")
+WAIT_SECONDS = int(os.getenv("E2E_WAIT_SECONDS", "180"))
 
-def wait_ok(url, timeout=60, label=None):
+def wait_ok(url, timeout=WAIT_SECONDS, label=None):
     label = label or url
     print(f"Waiting for {label} ...", flush=True)
     t0 = time.time()
