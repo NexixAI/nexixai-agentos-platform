@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
+	"strings"
 
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/audit"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/auth"
@@ -16,16 +16,22 @@ import (
 )
 
 type Server struct {
-	version string
-	limiter *quota.Limiter
-	audit   audit.Logger
+	version   string
+	limiter   *quota.Limiter
+	audit     audit.Logger
+	providers *registry
+	policy    *policyEngine
+	usage     *usageMeter
 }
 
 func New(version string) *Server {
 	return &Server{
-		version: version,
-		limiter: quota.NewFromEnv("AGENTOS_QUOTA_INVOKE_QPS", "AGENTOS_QUOTA_UNUSED_CONCURRENT", 20, 999999),
-		audit:   audit.NewFromEnv(),
+		version:   version,
+		limiter:   quota.NewFromEnv("AGENTOS_QUOTA_INVOKE_QPS", "AGENTOS_QUOTA_UNUSED_CONCURRENT", 20, 999999),
+		audit:     audit.NewFromEnv(),
+		providers: newRegistry(),
+		policy:    newPolicyEngine(),
+		usage:     newUsageMeter(),
 	}
 }
 
@@ -56,16 +62,7 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed", httpx.CorrelationID(r), false)
 		return
 	}
-	resp := types.ModelsListResponse{
-		Models: []types.Model{
-			{
-				ModelID:      "local-stub-llm",
-				Provider:     "stub",
-				DisplayName:  "Local Stub LLM",
-				Capabilities: map[string]any{"chat": true, "embeddings": true},
-			},
-		},
-	}
+	resp := types.ModelsListResponse{Models: s.providers.Models()}
 	httpx.JSON(w, http.StatusOK, resp)
 }
 
@@ -97,22 +94,40 @@ func (s *Server) handleInvoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out := map[string]any{
-		"type": "text",
-		"text": "stub response",
-		"echo": req.Input,
-		"ts":   time.Now().UTC().Format(time.RFC3339),
+	decision, reasons := s.policy.Evaluate(tenantID, ac, req)
+	if decision != "allow" {
+		httpx.Error(w, http.StatusForbidden, "policy_blocked", strings.Join(reasons, "; "), httpx.CorrelationID(r), false)
+		s.audit.Log(audit.Entry{
+			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "models.invoke", Resource: "model/" + req.ModelID, Outcome: "denied",
+			CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
+			Meta: map[string]any{"policy_reasons": reasons},
+		})
+		return
 	}
 
+	prov, model, ok := s.providers.Resolve(req.ModelID)
+	if !ok {
+		httpx.Error(w, http.StatusNotFound, "model_not_found", "model not found", httpx.CorrelationID(r), false)
+		return
+	}
+
+	output, usage, err := prov.Invoke(req)
+	if err != nil {
+		httpx.Error(w, http.StatusBadGateway, "provider_error", err.Error(), httpx.CorrelationID(r), true)
+		return
+	}
+	s.usage.Record(tenantID, usage)
+
 	resp := types.ModelInvokeResponse{
-		Output:        out,
+		Output:        output,
+		Usage:         usage,
 		CorrelationID: httpx.CorrelationID(r),
 	}
 
 	s.audit.Log(audit.Entry{
 		TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "models.invoke", Resource: "model/" + req.ModelID, Outcome: "allowed",
 		CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
-		Meta: map[string]any{"operation": req.Operation},
+		Meta: map[string]any{"operation": req.Operation, "model_id": model.ModelID, "provider": model.Provider},
 	})
 
 	httpx.JSON(w, http.StatusOK, resp)
@@ -136,16 +151,17 @@ func (s *Server) handlePolicyCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	decision, reasons := s.policy.EvaluatePolicyCheck(tenantID, ac, req)
 	resp := types.PolicyCheckResponse{
-		Decision:      "allow",
-		Reasons:       []string{"stub_policy_allows"},
+		Decision:      decision,
+		Reasons:       reasons,
 		CorrelationID: httpx.CorrelationID(r),
 	}
 
 	s.audit.Log(audit.Entry{
-		TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "policy.check", Resource: "policy", Outcome: "allowed",
+		TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "policy.check", Resource: "policy", Outcome: decision,
 		CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
-		Meta: map[string]any{"action": req.Action},
+		Meta: map[string]any{"action": req.Action, "resource": req.Resource},
 	})
 
 	httpx.JSON(w, http.StatusOK, resp)
