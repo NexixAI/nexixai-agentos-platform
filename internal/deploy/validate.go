@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -41,6 +42,11 @@ func (v Validator) ValidateAll() ([]CheckResult, error) {
 	checks = append(checks, v.checkGET("stack-b health", v.StackB+"/v1/health"))
 	checks = append(checks, v.checkGET("federation health", v.Fed+"/v1/federation/health"))
 
+	// Metrics
+	checks = append(checks, v.checkGET("stack-a metrics", v.StackA+"/metrics"))
+	checks = append(checks, v.checkGET("stack-b metrics", v.StackB+"/metrics"))
+	checks = append(checks, v.checkGET("federation metrics", v.Fed+"/metrics"))
+
 	// Smoke: Stack A create run using canonical request
 	reqPath := filepath.Join(v.RepoRoot, "docs", "api", "stack-a", "examples", "runs-create.request.json")
 	b, err := os.ReadFile(reqPath)
@@ -57,6 +63,16 @@ func (v Validator) ValidateAll() ([]CheckResult, error) {
 		checks = append(checks, v.checkPOST("stack-b invoke", v.StackB+"/v1/models:invoke", b2))
 	} else {
 		checks = append(checks, CheckResult{Name: "stack-b invoke", OK: false, Detail: "missing example file", URL: invPath})
+	}
+
+	// Optional observability checks (Prometheus/Grafana) if env provided
+	promURL := strings.TrimSpace(os.Getenv("AGENTOS_PROM_URL"))
+	if promURL != "" {
+		checks = append(checks, v.checkGET("prometheus ready", strings.TrimRight(promURL, "/")+"/-/ready"))
+	}
+	grafURL := strings.TrimSpace(os.Getenv("AGENTOS_GRAFANA_URL"))
+	if grafURL != "" {
+		checks = append(checks, v.checkGET("grafana health", strings.TrimRight(grafURL, "/")+"/api/health"))
 	}
 
 	failed := false
