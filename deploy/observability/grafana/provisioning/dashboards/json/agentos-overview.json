@@ -1,0 +1,67 @@
+{
+  "id": null,
+  "title": "AgentOS Overview",
+  "uid": "agentos-overview",
+  "tags": ["agentos"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "HTTP Requests (stack-a)",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(increase(agentos_http_requests_total{service=\"stack-a\"}[5m]))",
+          "legendFormat": "stack-a"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "HTTP Requests (stack-b)",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(increase(agentos_http_requests_total{service=\"stack-b\"}[5m]))",
+          "legendFormat": "stack-b"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "HTTP Requests (federation)",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(increase(agentos_http_requests_total{service=\"federation\"}[5m]))",
+          "legendFormat": "federation"
+        }
+      ]
+    },
+    {
+      "type": "timeSeries",
+      "title": "Request Duration p95",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(agentos_http_request_duration_seconds_bucket[5m])) by (le,service))",
+          "legendFormat": "{{service}}"
+        }
+      ]
+    },
+    {
+      "type": "timeSeries",
+      "title": "Quota Denied",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "expr": "sum(increase(agentos_quota_denied_total[5m])) by (service,quota)",
+          "legendFormat": "{{service}}/{{quota}}"
+        }
+      ]
+    }
+  ]
+}
