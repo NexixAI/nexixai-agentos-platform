@@ -16,6 +16,7 @@ import (
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/quota"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/storage"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/tenants"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/types"
 )
 
@@ -23,6 +24,7 @@ type Server struct {
 	version string
 
 	runs    storage.RunStore
+	tenants *tenants.Store
 	limiter *quota.Limiter
 	audit   audit.Logger
 }
@@ -32,9 +34,14 @@ func New(version string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	tenantStore := tenants.NewStore()
+	if def := auth.DefaultTenant(); def != "" {
+		tenantStore.EnsureDefault(def)
+	}
 	return &Server{
 		version: version,
 		runs:    runStore,
+		tenants: tenantStore,
 		limiter: quota.NewFromEnv("AGENTOS_QUOTA_RUN_CREATE_QPS", "AGENTOS_QUOTA_CONCURRENT_RUNS", 10, 25),
 		audit:   audit.NewFromEnv(),
 	}, nil
@@ -45,6 +52,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/health", s.handleHealth)
 	mux.HandleFunc("/v1/agents/", s.handleAgents) // /v1/agents/{agent_id}/runs
 	mux.HandleFunc("/v1/runs/", s.handleRuns)     // /v1/runs/{run_id} and /v1/runs/{run_id}/events
+	mux.HandleFunc("/v1/admin/tenants", s.handleTenants)
+	mux.HandleFunc("/v1/admin/tenants/", s.handleTenants)
 	mux.Handle("/metrics", middleware.ProtectMetrics(metrics.Handler()))
 
 	h := middleware.WithAuth(mux)
@@ -70,6 +79,10 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 	ac, _ := auth.Get(r.Context())
 	tenantID, ok := resolveTenant(w, r, ac)
 	if !ok {
+		return
+	}
+	if !s.tenantsExists(tenantID) {
+		httpx.Error(w, http.StatusForbidden, "tenant_unknown", "tenant not found", httpx.CorrelationID(r), false)
 		return
 	}
 
@@ -155,6 +168,14 @@ func (s *Server) handleRuns(w http.ResponseWriter, r *http.Request) {
 	ac, _ := auth.Get(r.Context())
 	tenantID, ok := resolveTenant(w, r, ac)
 	if !ok {
+		return
+	}
+	if !s.tenantsExists(tenantID) {
+		httpx.Error(w, http.StatusForbidden, "tenant_unknown", "tenant not found", httpx.CorrelationID(r), false)
+		return
+	}
+	if !s.tenantsExists(tenantID) {
+		httpx.Error(w, http.StatusForbidden, "tenant_unknown", "tenant not found", httpx.CorrelationID(r), false)
 		return
 	}
 
@@ -266,6 +287,99 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request, tenantID, 
 	flusher.Flush()
 }
 
+func (s *Server) handleTenants(w http.ResponseWriter, r *http.Request) {
+	ac, _ := auth.Get(r.Context())
+	if !hasScope(ac.Scopes, "tenants:admin") {
+		httpx.Error(w, http.StatusForbidden, "forbidden", "admin scope required", httpx.CorrelationID(r), false)
+		return
+	}
+
+	path := strings.TrimPrefix(r.URL.Path, "/v1/admin/tenants")
+	path = strings.Trim(path, "/")
+
+	if path == "" {
+		switch r.Method {
+		case http.MethodGet:
+			list := s.tenants.List()
+			httpx.JSON(w, http.StatusOK, map[string]any{"tenants": list, "correlation_id": httpx.CorrelationID(r)})
+		case http.MethodPost:
+			var t types.Tenant
+			if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+				httpx.Error(w, http.StatusBadRequest, "invalid_json", "invalid json body", httpx.CorrelationID(r), false)
+				return
+			}
+			if err := s.tenants.Create(t); err != nil {
+				code := http.StatusBadRequest
+				errCode := "invalid_request"
+				if errors.Is(err, tenants.ErrTenantExists) {
+					code = http.StatusConflict
+					errCode = "conflict"
+				}
+				httpx.Error(w, code, errCode, err.Error(), httpx.CorrelationID(r), false)
+				return
+			}
+			s.audit.Log(audit.Entry{
+				TenantID: t.TenantID, PrincipalID: ac.PrincipalID, Action: "tenants.create", Resource: "tenant/" + t.TenantID, Outcome: "allowed",
+				CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
+			})
+			httpx.JSON(w, http.StatusCreated, map[string]any{"tenant": t, "correlation_id": httpx.CorrelationID(r)})
+		default:
+			httpx.Error(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed", httpx.CorrelationID(r), false)
+		}
+		return
+	}
+
+	tenantID := path
+	switch r.Method {
+	case http.MethodGet:
+		if t, ok := s.tenants.Get(tenantID); ok {
+			httpx.JSON(w, http.StatusOK, map[string]any{"tenant": t, "correlation_id": httpx.CorrelationID(r)})
+			return
+		}
+		httpx.Error(w, http.StatusNotFound, "not_found", "tenant not found", httpx.CorrelationID(r), false)
+	case http.MethodPut, http.MethodPatch:
+		var t types.Tenant
+		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+			httpx.Error(w, http.StatusBadRequest, "invalid_json", "invalid json body", httpx.CorrelationID(r), false)
+			return
+		}
+		updated, err := s.tenants.Update(tenantID, t)
+		if err != nil {
+			code := http.StatusBadRequest
+			errCode := "invalid_request"
+			if errors.Is(err, tenants.ErrNotFound) {
+				code = http.StatusNotFound
+				errCode = "not_found"
+			}
+			httpx.Error(w, code, errCode, err.Error(), httpx.CorrelationID(r), false)
+			return
+		}
+		s.audit.Log(audit.Entry{
+			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "tenants.update", Resource: "tenant/" + tenantID, Outcome: "allowed",
+			CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
+		})
+		httpx.JSON(w, http.StatusOK, map[string]any{"tenant": updated, "correlation_id": httpx.CorrelationID(r)})
+	case http.MethodDelete:
+		if _, err := s.tenants.Delete(tenantID); err != nil {
+			code := http.StatusBadRequest
+			errCode := "invalid_request"
+			if errors.Is(err, tenants.ErrNotFound) {
+				code = http.StatusNotFound
+				errCode = "not_found"
+			}
+			httpx.Error(w, code, errCode, err.Error(), httpx.CorrelationID(r), false)
+			return
+		}
+		s.audit.Log(audit.Entry{
+			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "tenants.delete", Resource: "tenant/" + tenantID, Outcome: "allowed",
+			CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
+		})
+		httpx.JSON(w, http.StatusOK, map[string]any{"deleted": tenantID, "correlation_id": httpx.CorrelationID(r)})
+	default:
+		httpx.Error(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed", httpx.CorrelationID(r), false)
+	}
+}
+
 func resolveTenant(w http.ResponseWriter, r *http.Request, ac auth.AuthContext) (string, bool) {
 	tenantID, err := auth.RequireTenant(ac)
 	if err != nil {
@@ -281,4 +395,22 @@ func resolveTenant(w http.ResponseWriter, r *http.Request, ac auth.AuthContext) 
 		return "", false
 	}
 	return tenantID, true
+}
+
+func (s *Server) tenantsExists(tenantID string) bool {
+	if tenantID == "" {
+		return false
+	}
+	_, ok := s.tenants.Get(tenantID)
+	return ok
+}
+
+func hasScope(scopes []string, target string) bool {
+	target = strings.TrimSpace(target)
+	for _, s := range scopes {
+		if strings.EqualFold(strings.TrimSpace(s), target) {
+			return true
+		}
+	}
+	return false
 }
