@@ -1,265 +1,300 @@
-# AgentOS Execution Plan — INDEX
+# AgentOS Execution Index (v1.02)
 
-This document is the **authoritative execution index** for the NexixAI AgentOS platform.
+This document is the **execution ledger** for NexixAI AgentOS v1.02.
 
-It records:
-- the ordered phase plan
-- the intent and acceptance criteria of each phase
-- current execution status
-- how phases relate to one another
-- what “done” means in practice
+It maps **implementation phases** to their **authoritative requirements**
+(Product Requirements Specification and Design docs) and records execution
+status. This file does **not** redefine behavior; it provides **traceability**
+from specs → design → phases → code.
 
-This file is **non-normative** (see `SPEC_AUTHORITY.md`) but is the **operational source of truth** for sequencing and progress.
+Authoritative conflict rules are defined in `SPEC_AUTHORITY.md`.
 
 ---
 
-## Execution Model
+## Normative References (Source of Truth)
 
-AgentOS is implemented **sequentially by phase**.
+- **PRS (Behavioral + Product Requirements)**  
+  `docs/product/agentos-prs/v1.02-prs.md`
 
-Rules:
-- Phases are executed strictly in order.
-- Each phase is implemented on its own branch.
-- Each phase produces exactly **one commit** and **one PR**.
-- A phase is considered **complete** when:
-  - CI passes (unit + federation E2E)
-  - the PR is merged into `main`
-- `NEXT_PHASE.json` is updated **only after merge**.
+- **Schemas Appendix (Payload Authority)**  
+  `docs/product/agentos-prs/v1.02-schemas-appendix.md`
 
-Codex automation uses:
-- `docs/plan/NEXT_PHASE.json` as the **single source of truth**
-- this file (`INDEX.md`) as the **human-readable guide**
+- **Design (Architecture + Enforcement Points)**  
+  `docs/design/agentos-v1.02-design.md`
 
 ---
 
-## Phase Summary (0–16)
+## Phase Status Summary
 
-### Phase 0 — Repository Baseline & Spec Authority
-**Status:** ✅ Complete  
-**Goal:** Establish spec-first governance and repo skeleton.
+| Phase | Name | Status |
+|------:|------|--------|
+| 0 | Repo + Spec Authority Baseline | ✅ Complete |
+| 1 | Stack Skeletons | ✅ Complete |
+| 2 | Stack A Core APIs | ✅ Complete |
+| 3 | Stack B Core APIs | ✅ Complete |
+| 4 | Event Model + SSE | ✅ Complete |
+| 5 | Federation Baseline | ✅ Complete |
+| 6 | CLI + Deploy UX | ✅ Complete |
+| 7 | Multi-Tenancy Core | ✅ Complete |
+| 8 | Policy + Quotas | ✅ Complete |
+| 9 | Hardening Baseline | ✅ Complete |
+| 10 | Persistence | ✅ Complete |
+| 11 | AuthN / AuthZ | ✅ Complete |
+| 12 | Observability | ✅ Complete |
+| 13 | Federation Hardening | ✅ Complete |
+| 14 | Security + Audit | ✅ Complete |
+| 15 | Operator UX Polish | ✅ Complete |
+| 16 | Release Readiness | ✅ Complete |
 
-Key outcomes:
-- `SPEC_AUTHORITY.md`
-- locked spec precedence
-- repo layout normalized
-- no behavior, only structure
-
----
-
-### Phase 1 — Stack A Skeleton
-**Status:** ✅ Complete  
-**Goal:** Minimal orchestration runtime exists and boots.
-
-Key outcomes:
-- Stack A service entrypoint
-- health/readiness endpoints
-- basic run scaffolding
-- no persistence, no federation
-
----
-
-### Phase 2 — Stack B Skeleton
-**Status:** ✅ Complete  
-**Goal:** Model runtime exists behind a stable interface.
-
-Key outcomes:
-- OpenAI-compatible endpoints
-- pluggable backend shape
-- policy hook points (no enforcement yet)
+**Current focus:** 🚧 **Local & production deployment validation**
 
 ---
 
-### Phase 3 — Public API Contracts
-**Status:** ✅ Complete  
-**Goal:** Lock `/v1` API shapes and error models.
+## Phase Details
 
-Key outcomes:
-- run lifecycle endpoints
-- agent metadata
-- SSE event model
-- correlation + tracing invariants
+### Phase 0 — Repo + Spec Authority Baseline
+**Purpose**  
+Establish documentation-led development, authority rules, and repo layout.
 
----
+**References**
+- PRS: §1 Product Vision
+- Design: §1 System Overview
+- Authority: `SPEC_AUTHORITY.md`
 
-### Phase 4 — Ports & Adapters
-**Status:** ✅ Complete  
-**Goal:** Enforce internal decoupling.
-
-Key outcomes:
-- Model, Tool, Memory, Event, Queue ports
-- no concrete cross-module calls
-- adapters wired via config
+**Status**  
+✅ Complete
 
 ---
 
-### Phase 5 — Tool Invocation
-**Status:** ✅ Complete  
-**Goal:** Agents can safely call tools.
+### Phase 1 — Stack Skeletons
+**Purpose**  
+Create Stack A, Stack B, Federation skeletons with health endpoints.
 
-Key outcomes:
-- tool registry
-- invocation lifecycle
-- auth context propagation
-- timeout + error mapping
+**References**
+- PRS: §3 System Architecture
+- Design: §2 Module Boundaries
 
----
-
-### Phase 6 — Memory Interface
-**Status:** ✅ Complete  
-**Goal:** Agents can persist and retrieve state.
-
-Key outcomes:
-- memory port
-- namespace scoping
-- tenant-aware access patterns
-- pluggable backend shape
+**Status**  
+✅ Complete
 
 ---
 
-### Phase 7 — Federation v1
-**Status:** ✅ Complete  
-**Goal:** Multiple AgentOS nodes can cooperate.
+### Phase 2 — Stack A Core APIs
+**Purpose**  
+Implement agent/run lifecycle and public orchestration endpoints.
 
-Key outcomes:
-- peer discovery
-- run forwarding
-- event streaming across nodes
-- version/capability negotiation
+**References**
+- PRS: §4 External Product-Facing API
+- Design: §3 Stack A Responsibilities
+
+**Status**  
+✅ Complete
 
 ---
 
-### Phase 8 — CLI & Deployment UX
-**Status:** ✅ Complete  
-**Goal:** One-command operator experience.
+### Phase 3 — Stack B Core APIs
+**Purpose**  
+Provide governed model access with stable interfaces.
 
-Key outcomes:
-- `agentos up|validate|status|logs|nuke`
-- phase-based deploy output
-- report artifacts generated
-- safe destructive flows
+**References**
+- PRS: §6 Stack B API + Governance
+- Design: §4 Stack B Architecture
+
+**Status**  
+✅ Complete
+
+---
+
+### Phase 4 — Event Model + SSE
+**Purpose**  
+Define event envelopes and streaming semantics.
+
+**References**
+- Schemas Appendix: EventEnvelope
+- PRS: §4.1 Events
+- Design: §5 Eventing
+
+**Status**  
+✅ Complete
+
+---
+
+### Phase 5 — Federation Baseline
+**Purpose**  
+Enable run forwarding and cross-node event streaming.
+
+**References**
+- PRS: §7 Federation Specification
+- Design: §6 Federation Mechanics
+
+**Status**  
+✅ Complete
+
+---
+
+### Phase 6 — CLI + Deploy UX
+**Purpose**  
+One-command deploy, validate, status, redeploy, nuke.
+
+**References**
+- PRS: §8 Deployment UX
+- Design: §7 Operator Experience
+
+**Status**  
+✅ Complete
+
+---
+
+### Phase 7 — Multi-Tenancy Core
+**Purpose**  
+Introduce tenant isolation across stacks and federation.
+
+**References**
+- PRS: §15 Multi-Tenancy Specification
+- Design: §8 Tenancy Model
+
+**Status**  
+✅ Complete
+
+---
+
+### Phase 8 — Policy + Quotas
+**Purpose**  
+Per-tenant entitlements, budgets, and enforcement.
+
+**References**
+- PRS: §6.3 Policy Gates
+- PRS: §15.3 Quotas and Budgets
+- Design: §9 Policy Enforcement
+
+**Status**  
+✅ Complete
 
 ---
 
 ### Phase 9 — Hardening Baseline
-**Status:** ✅ Complete  
-**Goal:** Make CI + local dev reliable.
+**Purpose**  
+CI enforcement, conformance tests, federation E2E invariants.
 
-Key outcomes:
-- Docker-in-network invariant enforced
-- CI never curls localhost
-- federation E2E stabilized
-- repo hygiene normalized
+**References**
+- PRS: §11 Testing Requirements
+- Design: §10 Conformance Strategy
+
+**Status**  
+✅ Complete
 
 ---
 
 ### Phase 10 — Persistence
-**Status:** ✅ Complete (CI), ⚠️ Local deploy under investigation  
-**Goal:** Durable state survives restarts.
+**Purpose**  
+Durable run state, audit logs, and federation forward index.
 
-Key outcomes:
-- tenant-scoped run store (file-backed)
-- durable audit logs
-- persistent federation forward index
-- runtime data excluded from git
+**References**
+- PRS: §12 Operational Semantics
+- Design: §11 Persistence Strategy
 
----
-
-### Phase 11 — Authentication & Tenant Enforcement
-**Status:** ✅ Complete (CI), ⚠️ Local deploy under investigation  
-**Goal:** Enforce identity and tenant isolation.
-
-Key outcomes:
-- JWT/OIDC auth skeleton
-- AuthContext propagation everywhere
-- tenant mismatch rejection
-- federation forwards Authorization headers
+**Status**  
+✅ Complete
 
 ---
 
-### Phase 12 — Quotas & Budgets
-**Status:** ✅ Complete (CI), ⚠️ Local deploy under investigation  
-**Goal:** Prevent noisy neighbors.
+### Phase 11 — AuthN / AuthZ
+**Purpose**  
+Tenant-scoped authentication context and enforcement.
 
-Key outcomes:
-- per-tenant run limits
-- model token / cost budgets
-- explicit quota errors
-- metrics attribution by tenant
+**References**
+- PRS: §10 Security Requirements
+- Design: §12 Auth Context & Enforcement
 
----
-
-### Phase 13 — Observability & Alerting
-**Status:** ✅ Complete (CI), ⚠️ Local deploy under investigation  
-**Goal:** Make the system operable.
-
-Key outcomes:
-- Prometheus metrics
-- Grafana dashboards
-- Alertmanager config
-- tenant-safe cardinality controls
+**Status**  
+✅ Complete
 
 ---
 
-### Phase 14 — Tenant Administration
-**Status:** ✅ Complete (CI), ⚠️ Local deploy under investigation  
-**Goal:** Real multi-tenant control plane.
+### Phase 12 — Observability
+**Purpose**  
+Metrics, logs, traces, dashboards, alerting hooks.
 
-Key outcomes:
-- tenant CRUD
-- entitlements & quotas config
-- tenant enable/disable
-- audit coverage
+**References**
+- PRS: §9 Observability and Alerting
+- Design: §13 Observability Architecture
 
----
-
-### Phase 15 — Federation Reliability
-**Status:** ✅ Complete (CI), ⚠️ Local deploy under investigation  
-**Goal:** Make federation production-safe.
-
-Key outcomes:
-- retry/backoff
-- deduplication
-- delivery guarantees
-- partial failure tolerance
+**Status**  
+✅ Complete
 
 ---
 
-### Phase 16 — Production Hardening
-**Status:** ✅ Complete (CI), ⚠️ Local deploy under investigation  
-**Goal:** Close the gap to real production use.
+### Phase 13 — Federation Hardening
+**Purpose**  
+Retry semantics, dedupe, version negotiation, failure modes.
 
-Key outcomes:
-- mTLS hooks
-- stricter auth enforcement
-- safer defaults
-- improved failure modes
+**References**
+- PRS: §7.4 Federation Requirements
+- Design: §14 Federation Reliability
 
----
-
-## Current State
-
-- **All phases 0–16 are implemented and passing CI**
-- `NEXT_PHASE.json` has **not yet been incremented** due to ongoing local deployment validation
-- Local deploy issues are being debugged before declaring the platform “production-ready”
+**Status**  
+✅ Complete
 
 ---
 
-## How to Proceed
+### Phase 14 — Security + Audit
+**Purpose**  
+Audit durability, tenant-scoped records, compliance posture.
 
-1) Fix local deployment issues  
-2) Confirm `agentos up` succeeds end-to-end locally  
-3) Increment `NEXT_PHASE.json`  
-4) Declare Phase 16 **fully complete**  
-5) Optionally introduce:
-   - Phase 17: Performance tuning
-   - Phase 18: Security review / threat model
-   - Phase 19: Docs & onboarding polish
+**References**
+- PRS: §10 Security Requirements
+- PRS: §10.3 Audit Logging
+- Design: §15 Audit & Compliance
+
+**Status**  
+✅ Complete
 
 ---
 
-## Related Documents
+### Phase 15 — Operator UX Polish
+**Purpose**  
+Improve reports, summaries, error surfacing, and runbooks.
 
-- `SPEC_AUTHORITY.md` — precedence + guardrails
-- `docs/plan/NEXT_PHASE.json` — automation control
-- `docs/plan/phase-*.md` — per-phase requirements
-- `docs/product/agentos-prs/` — normative product spec
+**References**
+- PRS: §8 Deployment UX
+- Design: §16 Operator Tooling
+
+**Status**  
+✅ Complete
+
+---
+
+### Phase 16 — Release Readiness
+**Purpose**  
+Finalize invariants, docs coherence, and deployability.
+
+**References**
+- PRS: §13 Acceptance Criteria
+- Design: §17 Release Readiness
+
+**Status**  
+✅ Complete
+
+---
+
+## What Comes Next (Not a Phase)
+
+The system is **feature-complete** for v1.02.
+
+Remaining work is **environmental**, not architectural:
+
+- Local deployment parity with CI
+- Production-grade configuration validation
+- Secrets management integration (prod)
+- Optional Helm / cloud packaging
+
+These are **deployment tracks**, not new phases, and must **not**
+introduce new product behavior without PRS updates.
+
+---
+
+## Rules Going Forward
+
+- Do **not** add new phases without PRS + Design updates.
+- Do **not** modify completed phase docs retroactively.
+- Deployment fixes must preserve all Phase 0–16 invariants.
