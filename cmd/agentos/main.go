@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -36,6 +40,8 @@ func main() {
 		status(os.Args[2:])
 	case "nuke":
 		nuke(os.Args[2:])
+	case "tenants":
+		tenantsCmd(os.Args[2:])
 	case "version":
 		fmt.Println(version)
 	default:
@@ -53,6 +59,8 @@ Usage:
   agentos validate [--stack-a URL] [--stack-b URL] [--federation URL] [--tenant TENANT] [--principal PRINCIPAL]
   agentos status [--compose-file PATH] [--project NAME]
   agentos nuke [--compose-file PATH] [--project NAME] [--hard]
+  agentos tenants list [--stack-a URL]
+  agentos tenants create --id TENANT_ID [--name NAME] [--plan PLAN] [--stack-a URL]
 
 Defaults:
   compose file: deploy/local/compose.yaml
@@ -244,6 +252,73 @@ func nuke(args []string) {
 		log.Fatalf("nuke failed: %v", err)
 	}
 	log.Println("✅ nuke complete")
+}
+
+func tenantsCmd(args []string) {
+	if len(args) == 0 {
+		usage()
+		os.Exit(2)
+	}
+	switch strings.ToLower(args[0]) {
+	case "list":
+		tenantsList(args[1:])
+	case "create":
+		tenantsCreate(args[1:])
+	default:
+		usage()
+		os.Exit(2)
+	}
+}
+
+func tenantsList(args []string) {
+	fs := flag.NewFlagSet("tenants list", flag.ExitOnError)
+	stackA := fs.String("stack-a", "http://localhost:8081", "Stack A base URL")
+	_ = fs.Parse(args)
+
+	url := strings.TrimRight(*stackA, "/") + "/v1/admin/tenants"
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatalf("list tenants failed: %v", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Println(string(body))
+}
+
+func tenantsCreate(args []string) {
+	fs := flag.NewFlagSet("tenants create", flag.ExitOnError)
+	stackA := fs.String("stack-a", "http://localhost:8081", "Stack A base URL")
+	id := fs.String("id", "", "tenant id (required)")
+	name := fs.String("name", "", "tenant name")
+	plan := fs.String("plan", "", "plan tier")
+	_ = fs.Parse(args)
+
+	if strings.TrimSpace(*id) == "" {
+		log.Fatal("tenant id required")
+	}
+
+	payload := map[string]any{
+		"tenant_id": *id,
+	}
+	if *name != "" {
+		payload["name"] = *name
+	}
+	if *plan != "" {
+		payload["plan_tier"] = *plan
+	}
+	b, _ := json.Marshal(payload)
+	url := strings.TrimRight(*stackA, "/") + "/v1/admin/tenants"
+	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatalf("create tenant failed: %v", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Println(string(body))
 }
 
 func printAccess(endpoints map[string]string) {
