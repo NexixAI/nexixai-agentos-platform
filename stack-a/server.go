@@ -68,9 +68,8 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ac, _ := auth.Get(r.Context())
-	tenantID, ok := auth.RequireTenant(ac)
+	tenantID, ok := resolveTenant(w, r, ac)
 	if !ok {
-		httpx.Error(w, http.StatusUnauthorized, "unauthorized", "tenant_id required", httpx.CorrelationID(r), false)
 		return
 	}
 
@@ -154,9 +153,8 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleRuns(w http.ResponseWriter, r *http.Request) {
 	ac, _ := auth.Get(r.Context())
-	tenantID, ok := auth.RequireTenant(ac)
+	tenantID, ok := resolveTenant(w, r, ac)
 	if !ok {
-		httpx.Error(w, http.StatusUnauthorized, "unauthorized", "tenant_id required", httpx.CorrelationID(r), false)
 		return
 	}
 
@@ -266,4 +264,21 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request, tenantID, 
 	_, _ = bw.WriteString("data: " + string(b) + "\n\n")
 	_ = bw.Flush()
 	flusher.Flush()
+}
+
+func resolveTenant(w http.ResponseWriter, r *http.Request, ac auth.AuthContext) (string, bool) {
+	tenantID, err := auth.RequireTenant(ac)
+	if err != nil {
+		code := http.StatusUnauthorized
+		errCode := "unauthorized"
+		msg := err.Error()
+		retryable := false
+		if errors.Is(err, auth.ErrTenantMismatch) {
+			code = http.StatusBadRequest
+			errCode = "tenant_mismatch"
+		}
+		httpx.Error(w, code, errCode, msg, httpx.CorrelationID(r), retryable)
+		return "", false
+	}
+	return tenantID, true
 }

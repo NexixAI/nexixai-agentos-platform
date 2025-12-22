@@ -2,6 +2,7 @@ package federation
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"strconv"
@@ -113,7 +114,14 @@ func (s *Server) handleForwardRun(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ac, _ := auth.Get(r.Context())
-	tenantHdr, _ := auth.RequireTenant(ac)
+	tenantHdr, err := auth.RequireTenant(ac)
+	if err != nil {
+		if errors.Is(err, auth.ErrTenantMismatch) {
+			httpx.Error(w, http.StatusBadRequest, "tenant_mismatch", err.Error(), httpx.CorrelationID(r), false)
+			return
+		}
+		tenantHdr = "" // allow payload to supply tenant when header/default missing
+	}
 
 	var req map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -177,7 +185,9 @@ func (s *Server) handleForwardRun(w http.ResponseWriter, r *http.Request) {
 		"idempotency_key": runReq["idempotency_key"],
 	}
 
-	remoteRunID, remoteEventsURL, status, err := s.forward.ForwardRun(peer.Endpoints.StackABaseURL, agentID, tenantID, principalPayload, runCreate)
+	bearer := bearerToken(r.Header.Get("Authorization"))
+
+	remoteRunID, remoteEventsURL, status, err := s.forward.ForwardRun(peer.Endpoints.StackABaseURL, agentID, tenantID, principalPayload, bearer, runCreate)
 	if err != nil {
 		metrics.IncFederationForwardFailure("federation", "forward_run_failed")
 		httpx.Error(w, http.StatusBadGateway, "forward_failed", err.Error(), httpx.CorrelationID(r), true)
@@ -213,7 +223,14 @@ func (s *Server) handleEventsIngest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ac, _ := auth.Get(r.Context())
-	tenantHdr, _ := auth.RequireTenant(ac)
+	tenantHdr, err := auth.RequireTenant(ac)
+	if err != nil {
+		if errors.Is(err, auth.ErrTenantMismatch) {
+			httpx.Error(w, http.StatusBadRequest, "tenant_mismatch", err.Error(), httpx.CorrelationID(r), false)
+			return
+		}
+		tenantHdr = ""
+	}
 
 	var req map[string]any
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -287,9 +304,8 @@ func (s *Server) handleRunEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ac, _ := auth.Get(r.Context())
-	tenantID, ok := auth.RequireTenant(ac)
+	tenantID, ok := resolveTenant(w, r, ac)
 	if !ok {
-		httpx.Error(w, http.StatusUnauthorized, "unauthorized", "tenant_id required", httpx.CorrelationID(r), false)
 		return
 	}
 
@@ -310,7 +326,8 @@ func (s *Server) handleRunEvents(w http.ResponseWriter, r *http.Request) {
 
 	// Prefer SSE proxy if forwarded.
 	if tgt, ok := s.index.Get(tenantID, runID); ok && tgt.RemoteEventsURL != "" {
-		if err := s.proxy.Proxy(w, tgt.RemoteEventsURL, tenantID, ac.PrincipalID, fromSeq); err != nil {
+		bearer := bearerToken(r.Header.Get("Authorization"))
+		if err := s.proxy.Proxy(w, tgt.RemoteEventsURL, tenantID, ac.PrincipalID, bearer, fromSeq); err != nil {
 			metrics.IncFederationForwardFailure("federation", "events_proxy_failed")
 			httpx.Error(w, http.StatusBadGateway, "events_proxy_failed", err.Error(), httpx.CorrelationID(r), true)
 		}
@@ -324,4 +341,29 @@ func (s *Server) handleRunEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.Error(w, http.StatusNotFound, "not_found", "run not found", httpx.CorrelationID(r), false)
+}
+
+func resolveTenant(w http.ResponseWriter, r *http.Request, ac auth.AuthContext) (string, bool) {
+	tenantID, err := auth.RequireTenant(ac)
+	if err != nil {
+		code := http.StatusUnauthorized
+		errCode := "unauthorized"
+		msg := err.Error()
+		retryable := false
+		if errors.Is(err, auth.ErrTenantMismatch) {
+			code = http.StatusBadRequest
+			errCode = "tenant_mismatch"
+		}
+		httpx.Error(w, code, errCode, msg, httpx.CorrelationID(r), retryable)
+		return "", false
+	}
+	return tenantID, true
+}
+
+func bearerToken(header string) string {
+	h := strings.TrimSpace(header)
+	if strings.HasPrefix(strings.ToLower(h), "bearer ") {
+		return strings.TrimSpace(h[len("bearer "):])
+	}
+	return ""
 }

@@ -2,6 +2,7 @@ package stackb
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -75,9 +76,8 @@ func (s *Server) handleInvoke(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ac, _ := auth.Get(r.Context())
-	tenantID, ok := auth.RequireTenant(ac)
+	tenantID, ok := resolveTenant(w, r, ac)
 	if !ok {
-		httpx.Error(w, http.StatusUnauthorized, "unauthorized", "tenant_id required", httpx.CorrelationID(r), false)
 		return
 	}
 	if !s.limiter.AllowQPS(tenantID) {
@@ -125,9 +125,8 @@ func (s *Server) handlePolicyCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ac, _ := auth.Get(r.Context())
-	tenantID, ok := auth.RequireTenant(ac)
+	tenantID, ok := resolveTenant(w, r, ac)
 	if !ok {
-		httpx.Error(w, http.StatusUnauthorized, "unauthorized", "tenant_id required", httpx.CorrelationID(r), false)
 		return
 	}
 
@@ -150,4 +149,21 @@ func (s *Server) handlePolicyCheck(w http.ResponseWriter, r *http.Request) {
 	})
 
 	httpx.JSON(w, http.StatusOK, resp)
+}
+
+func resolveTenant(w http.ResponseWriter, r *http.Request, ac auth.AuthContext) (string, bool) {
+	tenantID, err := auth.RequireTenant(ac)
+	if err != nil {
+		code := http.StatusUnauthorized
+		errCode := "unauthorized"
+		msg := err.Error()
+		retryable := false
+		if errors.Is(err, auth.ErrTenantMismatch) {
+			code = http.StatusBadRequest
+			errCode = "tenant_mismatch"
+		}
+		httpx.Error(w, code, errCode, msg, httpx.CorrelationID(r), retryable)
+		return "", false
+	}
+	return tenantID, true
 }
