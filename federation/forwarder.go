@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -16,63 +18,105 @@ type Forwarder struct {
 }
 
 func NewForwarder() *Forwarder {
+	maxAttempts := 3
+	if v := strings.TrimSpace(os.Getenv("AGENTOS_FED_FORWARD_MAX_ATTEMPTS")); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 {
+			maxAttempts = parsed
+		}
+	}
+	baseBackoff := 250 * time.Millisecond
+	if v := strings.TrimSpace(os.Getenv("AGENTOS_FED_FORWARD_BASE_BACKOFF_MS")); v != "" {
+		if parsed, err := strconv.Atoi(v); err == nil && parsed > 0 {
+			baseBackoff = time.Duration(parsed) * time.Millisecond
+		}
+	}
+
 	return &Forwarder{
-		Client: &http.Client{Timeout: 10 * time.Second},
+		Client:      &http.Client{Timeout: 10 * time.Second},
+		MaxAttempts: maxAttempts,
+		BaseBackoff: baseBackoff,
 	}
 }
 
 // ForwardRun calls the remote Stack A Run Create endpoint and returns (remote_run_id, remote_events_url, status).
 func (f *Forwarder) ForwardRun(remoteStackABaseURL string, agentID string, tenantID string, principalID string, bearerToken string, runCreateReq map[string]any) (string, string, string, error) {
+	maxAttempts := f.MaxAttempts
+	if maxAttempts <= 0 {
+		maxAttempts = 1
+	}
+	backoff := f.BaseBackoff
+	if backoff <= 0 {
+		backoff = 250 * time.Millisecond
+	}
+
 	url := strings.TrimRight(remoteStackABaseURL, "/") + "/v1/agents/" + agentID + "/runs"
 
 	body, _ := json.Marshal(runCreateReq)
-	req, _ := http.NewRequest("POST", url, bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-Id", tenantID)
-	if principalID != "" {
-		req.Header.Set("X-Principal-Id", principalID)
-	}
-	if bearerToken != "" {
-		req.Header.Set("Authorization", "Bearer "+bearerToken)
+
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		req, _ := http.NewRequest("POST", url, bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-Tenant-Id", tenantID)
+		if principalID != "" {
+			req.Header.Set("X-Principal-Id", principalID)
+		}
+		if bearerToken != "" {
+			req.Header.Set("Authorization", "Bearer "+bearerToken)
+		}
+
+		resp, err := f.Client.Do(req)
+		if err != nil {
+			lastErr = err
+		} else {
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				var decoded map[string]any
+				if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
+					_ = resp.Body.Close()
+					return "", "", "", err
+				}
+				_ = resp.Body.Close()
+
+				runObj, _ := decoded["run"].(map[string]any)
+				runID, _ := runObj["run_id"].(string)
+				eventsURL, _ := runObj["events_url"].(string)
+				status, _ := runObj["status"].(string)
+
+				if runID == "" || eventsURL == "" {
+					return "", "", "", fmt.Errorf("remote response missing run_id/events_url")
+				}
+
+				// events_url is expected to be relative; normalize to absolute.
+				absEvents := eventsURL
+				if strings.HasPrefix(eventsURL, "/") {
+					absEvents = strings.TrimRight(remoteStackABaseURL, "/") + eventsURL
+				} else if strings.HasPrefix(eventsURL, "http://") || strings.HasPrefix(eventsURL, "https://") {
+					absEvents = eventsURL
+				} else {
+					absEvents = strings.TrimRight(remoteStackABaseURL, "/") + "/" + eventsURL
+				}
+
+				if status == "" {
+					status = "queued"
+				}
+
+				return runID, absEvents, status, nil
+			}
+
+			lastErr = fmt.Errorf("remote stack-a returned %s", resp.Status)
+			_ = resp.Body.Close()
+
+			// Do not retry non-retryable client errors.
+			if resp.StatusCode >= 400 && resp.StatusCode < 500 {
+				return "", "", "", lastErr
+			}
+		}
+
+		// Retry transient failures with simple linear backoff.
+		if attempt < maxAttempts {
+			time.Sleep(time.Duration(attempt) * backoff)
+		}
 	}
 
-	resp, err := f.Client.Do(req)
-	if err != nil {
-		return "", "", "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", "", "", fmt.Errorf("remote stack-a returned %s", resp.Status)
-	}
-
-	var decoded map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
-		return "", "", "", err
-	}
-
-	runObj, _ := decoded["run"].(map[string]any)
-	runID, _ := runObj["run_id"].(string)
-	eventsURL, _ := runObj["events_url"].(string)
-	status, _ := runObj["status"].(string)
-
-	if runID == "" || eventsURL == "" {
-		return "", "", "", fmt.Errorf("remote response missing run_id/events_url")
-	}
-
-	// events_url is expected to be relative; normalize to absolute.
-	absEvents := eventsURL
-	if strings.HasPrefix(eventsURL, "/") {
-		absEvents = strings.TrimRight(remoteStackABaseURL, "/") + eventsURL
-	} else if strings.HasPrefix(eventsURL, "http://") || strings.HasPrefix(eventsURL, "https://") {
-		absEvents = eventsURL
-	} else {
-		absEvents = strings.TrimRight(remoteStackABaseURL, "/") + "/" + eventsURL
-	}
-
-	if status == "" {
-		status = "queued"
-	}
-
-	return runID, absEvents, status, nil
+	return "", "", "", lastErr
 }

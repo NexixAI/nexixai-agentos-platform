@@ -1,6 +1,8 @@
 package federation
 
 import (
+	"encoding/json"
+	"strconv"
 	"sync"
 )
 
@@ -47,10 +49,7 @@ func (s *eventStore) Ingest(tenantID, runID string, envelopes []map[string]any) 
 			continue
 		}
 
-		seq := 0
-		if v, ok := eventObj["sequence"].(float64); ok {
-			seq = int(v)
-		}
+		seq := eventSequence(eventObj)
 		if seq != 0 && seq <= st.lastSequence {
 			// enforce monotonic ordering
 			rejected++
@@ -83,4 +82,47 @@ func (s *eventStore) List(tenantID, runID string) ([]map[string]any, bool) {
 	out := make([]map[string]any, 0, len(st.events))
 	out = append(out, st.events...)
 	return out, true
+}
+
+func (s *eventStore) ListFromSequence(tenantID, runID string, fromSequence int) ([]map[string]any, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	st := s.m[storeKey{TenantID: tenantID, RunID: runID}]
+	if st == nil {
+		return nil, false
+	}
+
+	out := make([]map[string]any, 0, len(st.events))
+	for _, env := range st.events {
+		eventObj, _ := env["event"].(map[string]any)
+		seq := eventSequence(eventObj)
+		if seq == 0 || seq > fromSequence {
+			out = append(out, env)
+		}
+	}
+	return out, true
+}
+
+func eventSequence(eventObj map[string]any) int {
+	if eventObj == nil {
+		return 0
+	}
+	switch v := eventObj["sequence"].(type) {
+	case json.Number:
+		if i, err := strconv.Atoi(v.String()); err == nil {
+			return i
+		}
+	case float64:
+		return int(v)
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case string:
+		if i, err := strconv.Atoi(v); err == nil {
+			return i
+		}
+	}
+	return 0
 }

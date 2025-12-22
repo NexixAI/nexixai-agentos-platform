@@ -335,7 +335,7 @@ func (s *Server) handleRunEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Otherwise, stream ingested events (push mode).
-	if envs, ok := s.events.List(tenantID, runID); ok {
+	if envs, ok := s.events.ListFromSequence(tenantID, runID, fromSeq); ok {
 		_ = StreamStoredEvents(w, envs)
 		return
 	}
