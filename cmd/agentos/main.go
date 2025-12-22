@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/federation"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/config"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/deploy"
 	stacka "github.com/eyoshidagorgonia/nexixai-agentos-platform/stack-a"
 	stackb "github.com/eyoshidagorgonia/nexixai-agentos-platform/stack-b"
@@ -90,6 +91,10 @@ func newRunner(composeFile, project string) deploy.ComposeRunner {
 }
 
 func serve(args []string) {
+	if err := config.EnsureSafeProfile(); err != nil {
+		log.Fatalf("refusing to start in prod: %v", err)
+	}
+
 	fs := flag.NewFlagSet("serve", flag.ExitOnError)
 	addr := fs.String("addr", ":8081", "listen address (host:port)")
 	_ = fs.Parse(args)
