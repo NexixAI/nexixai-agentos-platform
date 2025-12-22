@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -20,7 +22,9 @@ func NewSSEProxy() *SSEProxy {
 
 // Proxy streams SSE from remote to the client, with lightweight event_id dedupe per-connection.
 func (p *SSEProxy) Proxy(w http.ResponseWriter, remoteEventsURL string, tenantID string, principalID string, bearerToken string, fromSequence int) error {
-	req, err := http.NewRequest("GET", remoteEventsURL, nil)
+	targetURL := addFromSequence(remoteEventsURL, fromSequence)
+
+	req, err := http.NewRequest("GET", targetURL, nil)
 	if err != nil {
 		return err
 	}
@@ -140,4 +144,18 @@ func StreamStoredEvents(w http.ResponseWriter, envelopes []map[string]any) error
 	// small delay so clients have time to read before close (helps curl demos)
 	time.Sleep(25 * time.Millisecond)
 	return nil
+}
+
+func addFromSequence(remoteEventsURL string, fromSequence int) string {
+	if fromSequence <= 0 {
+		return remoteEventsURL
+	}
+	parsed, err := url.Parse(remoteEventsURL)
+	if err != nil {
+		return remoteEventsURL
+	}
+	q := parsed.Query()
+	q.Set("from_sequence", strconv.Itoa(fromSequence))
+	parsed.RawQuery = q.Encode()
+	return parsed.String()
 }
