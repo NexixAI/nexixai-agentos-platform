@@ -1,12 +1,3 @@
-# Phase 10 — Persistence
-
-Goal: Durable run state, federation forward index, audit store.
-
-Deliverables:
-- Persistence ports + adapters
-- Local default (SQLite acceptable)
-- Tests + federation E2E
-
-Acceptance:
-- Runs survive restart
-- Tenant scoping enforced
+# Moved
+This document moved to: docs/plan/v1.02/phases/phase-10.md
+This file is a compatibility stub; update links to the canonical location.

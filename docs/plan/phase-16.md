@@ -1,11 +1,3 @@
-# Phase 16 — Hardening v2
-
-Goal: Backpressure, replay, SLO alerts.
-
-Deliverables:
-- Retry/backpressure
-- Cursoring
-- SLO alerts
-
-Acceptance:
-- Actionable alerts fire
+# Moved
+This document moved to: docs/plan/v1.02/phases/phase-16.md
+This file is a compatibility stub; update links to the canonical location.

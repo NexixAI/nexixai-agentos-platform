@@ -8,7 +8,7 @@ It exists to prevent “interpretation drift” between specs, code, automation,
 ## Normative documents (v1.02)
 
 **Primary**
-1. `docs/product/agentos-prs/v1.02-schemas-appendix.md`  
+1. `docs/product/agentos-prs/v1.02/schemas-appendix.md`  
    Source of truth for **JSON payload shapes**, required fields, event envelopes, auth context, federation payloads.
 
 2. OpenAPI specs (once populated; must match the Schemas Appendix)
@@ -17,15 +17,17 @@ It exists to prevent “interpretation drift” between specs, code, automation,
    - `docs/api/federation/openapi.yaml`
 
 **Secondary**
-3. `docs/product/agentos-prs/v1.02-prs.md`  
+3. `docs/product/agentos-prs/v1.02/prs.md`  
    Source of truth for **behavioral requirements**, quality attributes, deployment UX, observability, and acceptance criteria.
 
-4. `docs/design/agentos-v1.02-design.md`  
+4. `docs/design/v1.02/agentos-design.md`  
    Source of truth for **internal architecture decisions**: module boundaries, ports/adapters, persistence strategy, multi-tenancy enforcement points, and federation mechanics.
 
 5. Examples + conformance tests (once added)
    - `docs/api/*/examples/*.json`
    - `tests/conformance/*`
+
+Legacy v1.02 paths remain as compatibility stubs; update links to the canonical locations above.
 
 ---
 
@@ -117,8 +119,8 @@ Rules:
 3. Make **minimal diffs** limited to impacted sections.
 4. Do not delete user-authored content unless clearly incorrect.
 5. Keep spec links stable:
-   - `docs/product/agentos-prs/v1.02-prs.md`
-   - `docs/product/agentos-prs/v1.02-schemas-appendix.md`
+   - `docs/product/agentos-prs/v1.02/prs.md`
+   - `docs/product/agentos-prs/v1.02/schemas-appendix.md`
 6. New content must be appended, not reorganized.
 
 ---

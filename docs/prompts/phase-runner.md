@@ -2,13 +2,13 @@
 
 This runner defines the **single, repeatable** procedure Codex must follow to implement AgentOS v1.02 **phases sequentially**.
 
-It does **not** change product requirements. It executes the plan in `docs/plan/phase-*.md` while obeying `SPEC_AUTHORITY.md`.
+It does **not** change product requirements. It executes the plan in `docs/plan/${plan_version}/phases/phase-*.md` (temporary fallback to `docs/plan/phase-*.md`) while obeying `SPEC_AUTHORITY.md`.
 
 ---
 
 ## Inputs (single source of truth)
 
-Codex must read the next phase number from the **first existing** file in this order:
+Codex must read the next phase number and plan version from the **first existing** file in this order:
 
 1) `configs/NEXT_PHASE.json` (primary)  
 2) `docs/plan/NEXT_PHASE.json` (fallback)
@@ -18,7 +18,10 @@ If neither exists: **STOP and report**.
 Expected format:
 
 ```json
-{ "next": 12 }
+{
+  "plan_version": "v1.02",
+  "next": 12
+}
 ```
 
 ---
@@ -45,10 +48,12 @@ Expected format:
    - `configs/NEXT_PHASE.json`, else
    - `docs/plan/NEXT_PHASE.json`
 
-2) Let:
-   - `PHASE_DOC = docs/plan/phase-${PHASE_NUM}.md`
+2) Read `plan_version` from the same file.
 
-3) If `PHASE_DOC` does not exist: **STOP and report**.
+3) Let:
+   - `PHASE_DOC = docs/plan/${plan_version}/phases/phase-${PHASE_NUM}.md`
+
+4) If `PHASE_DOC` does not exist, temporarily fallback to `docs/plan/phase-${PHASE_NUM}.md`. If neither exists: **STOP and report**.
 
 ---
 

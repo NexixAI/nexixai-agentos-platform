@@ -2,7 +2,7 @@
 
 Tracks are **post-v1.02 work items**. They are executed as PRs, but they are **not** PRS phases.
 
-This runner uses **one knob**: `configs/NEXT_TRACK.json`.
+This runner uses **one knob**: `configs/NEXT_TRACK.json` (including `plan_version`). Canonical track docs live under `docs/plan/${plan_version}/tracks/` with legacy stubs preserved for back-compat.
 
 ---
 
@@ -26,9 +26,9 @@ You must operate **SEQUENTIALLY by track** using `configs/NEXT_TRACK.json` as th
 
 ### TRACK SELECTION
 1) Read `configs/NEXT_TRACK.json`.
-2) Let `TRACK_NUM = next_track`.
-3) Resolve `TRACK_DOC = tracks[TRACK_NUM].doc`.
-4) If `TRACK_DOC` does not exist, STOP and report.
+2) Let `TRACK_NUM = next_track` and `plan_version = plan_version`.
+3) Resolve `TRACK_DOC = docs/plan/${plan_version}/tracks/track-${TRACK_NUM}-*.md` (or map via `docs/plan/${plan_version}/tracks/INDEX.md`).
+4) If the canonical `TRACK_DOC` does not exist, temporarily fallback to `docs/plan/tracks/*`. If neither exists, STOP and report.
 
 ### BRANCH / PR RULES
 - Fetch latest `main`.

@@ -1,23 +1,24 @@
 {
   "version": "1.0",
   "mode": "track",
+  "plan_version": "v1.02",
   "next_track": 1,
   "tracks": {
     "1": {
       "slug": "local-deploy-parity",
-      "doc": "docs/plan/tracks/track-01-local-deploy-parity.md"
+      "doc": "docs/plan/v1.02/tracks/track-01-local-deploy-parity.md"
     },
     "2": {
       "slug": "config-validation",
-      "doc": "docs/plan/tracks/track-02-config-validation.md"
+      "doc": "docs/plan/v1.02/tracks/track-02-config-validation.md"
     },
     "3": {
       "slug": "secrets-prod-path",
-      "doc": "docs/plan/tracks/track-03-secrets-prod-path.md"
+      "doc": "docs/plan/v1.02/tracks/track-03-secrets-prod-path.md"
     },
     "4": {
       "slug": "helm-cloud-packaging",
-      "doc": "docs/plan/tracks/track-04-helm-cloud-packaging.md"
+      "doc": "docs/plan/v1.02/tracks/track-04-helm-cloud-packaging.md"
     }
   },
   "notes": "Tracks are post-v1.02 execution work items. They are implemented as PRs but are not PRS phases. Do not change normative docs (PRS/schemas/OpenAPI) unless explicitly instructed by SPEC_AUTHORITY.md."
