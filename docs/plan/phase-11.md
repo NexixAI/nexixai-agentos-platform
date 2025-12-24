@@ -1,11 +1,3 @@
-# Phase 11 — AuthN/AuthZ
-
-Goal: JWT/OIDC skeleton + tenant-scoped auth.
-
-Deliverables:
-- Auth middleware
-- Tenant enforcement
-- Federation propagation
-
-Acceptance:
-- Cross-tenant access rejected
+# Moved
+This document moved to: docs/plan/v1.02/phases/phase-11.md
+This file is a compatibility stub; update links to the canonical location.

@@ -1,11 +1,3 @@
-# Phase 9 — Hardening Baseline
-
-**Date completed:** 2025-12-21  
-**Status:** Complete
-
-## Goal
-See INDEX.md for high-level phase goals.
-
-## Verification
-- CI passing
-- Specs and code aligned
+# Moved
+This document moved to: docs/plan/v1.02/phases/phase-9.md
+This file is a compatibility stub; update links to the canonical location.

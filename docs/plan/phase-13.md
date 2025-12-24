@@ -1,10 +1,3 @@
-# Phase 13 — Observability
-
-Goal: OOTB metrics, dashboards, alerts.
-
-Deliverables:
-- Prometheus + Grafana wiring
-- agentos validate checks
-
-Acceptance:
-- Dashboards live <2 min
+# Moved
+This document moved to: docs/plan/v1.02/phases/phase-13.md
+This file is a compatibility stub; update links to the canonical location.

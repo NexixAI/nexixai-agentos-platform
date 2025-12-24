@@ -1,10 +1,3 @@
-# Phase 15 — Production Profiles
-
-Goal: demo/dev/prod modes + bootstrap.
-
-Deliverables:
-- Profiles + config precedence
-- Safe prod startup
-
-Acceptance:
-- Prod refuses insecure start
+# Moved
+This document moved to: docs/plan/v1.02/phases/phase-15.md
+This file is a compatibility stub; update links to the canonical location.
