@@ -18,7 +18,7 @@ scrape_configs:
       module: [http_2xx]
     static_configs:
       - targets:
-          - http://host.docker.internal:8081/v1/health
+          - http://host.docker.internal:50081/v1/health
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -34,7 +34,7 @@ scrape_configs:
       module: [http_2xx]
     static_configs:
       - targets:
-          - http://host.docker.internal:8082/v1/health
+          - http://host.docker.internal:50082/v1/health
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -50,7 +50,7 @@ scrape_configs:
       module: [http_2xx]
     static_configs:
       - targets:
-          - http://host.docker.internal:8083/v1/federation/health
+          - http://host.docker.internal:50083/v1/federation/health
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -63,14 +63,14 @@ scrape_configs:
   - job_name: "agentos-metrics-stack-a"
     metrics_path: /metrics
     static_configs:
-      - targets: ["host.docker.internal:8081"]
+      - targets: ["host.docker.internal:50081"]
 
   - job_name: "agentos-metrics-stack-b"
     metrics_path: /metrics
     static_configs:
-      - targets: ["host.docker.internal:8082"]
+      - targets: ["host.docker.internal:50082"]
 
   - job_name: "agentos-metrics-federation"
     metrics_path: /metrics
     static_configs:
-      - targets: ["host.docker.internal:8083"]
+      - targets: ["host.docker.internal:50083"]
