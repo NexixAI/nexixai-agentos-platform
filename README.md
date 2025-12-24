@@ -36,10 +36,10 @@ code exists to prove contracts and execution paths, not to outrun the design.
 /AGENTS.md
 
 /docs/
-api/
-design/
-product/
-plan/
+/api/ (OpenAPI specs)
+/design/ (canonical design: docs/design/v1.02/)
+product/ (canonical PRS & schemas: docs/product/agentos-prs/v1.02/)
+plan/v1.02/ (canonical plan docs)
 templates/
 
 /cmd/agentos/

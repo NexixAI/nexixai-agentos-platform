@@ -132,7 +132,7 @@ Include:
 - Push:
   - `git push -u origin phase-${PHASE_NUM}`
 - Open PR (use GitHub CLI if available):
-  - `gh pr create --base main --head phase-${PHASE_NUM} --title "Phase ${PHASE_NUM}" --body "Implements docs/plan/phase-${PHASE_NUM}.md. One phase, one commit. Tests: go test ./... + federation 2-node E2E."`
+  - `gh pr create --base main --head phase-${PHASE_NUM} --title "Phase ${PHASE_NUM}" --body "Implements docs/plan/${plan_version}/phases/phase-${PHASE_NUM}.md. One phase, one commit. Tests: go test ./... + federation 2-node E2E."`
 
 Then **STOP**.
 
