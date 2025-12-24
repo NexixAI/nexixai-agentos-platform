@@ -24,21 +24,51 @@ type Entry struct {
 
 type Logger interface {
 	Log(e Entry)
+	Close() error
 }
 
 type jsonLineLogger struct {
-	mu sync.Mutex
-	w  io.Writer
+	mu        sync.Mutex
+	w         io.Writer
+	file      *os.File
+	closed    bool
+	closeOnce sync.Once
 }
 
 func (l *jsonLineLogger) Log(e Entry) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if l.closed {
+		return
+	}
 	if e.Time == "" {
 		e.Time = time.Now().UTC().Format(time.RFC3339)
 	}
 	b, _ := json.Marshal(e)
 	_, _ = l.w.Write(append(b, '\n'))
+	if f, ok := l.w.(interface{ Flush() error }); ok {
+		_ = f.Flush()
+	}
+}
+
+func (l *jsonLineLogger) Close() error {
+	var err error
+	l.closeOnce.Do(func() {
+		l.mu.Lock()
+		defer l.mu.Unlock()
+		l.closed = true
+		if f, ok := l.w.(interface{ Flush() error }); ok {
+			if flushErr := f.Flush(); flushErr != nil {
+				err = flushErr
+			}
+		}
+		if l.file != nil {
+			if closeErr := l.file.Close(); closeErr != nil && err == nil {
+				err = closeErr
+			}
+		}
+	})
+	return err
 }
 
 // NewFromEnv creates an audit logger.
@@ -70,7 +100,7 @@ func NewFromEnv() Logger {
 		if err != nil {
 			return &jsonLineLogger{w: os.Stdout}
 		}
-		return &jsonLineLogger{w: f}
+		return &jsonLineLogger{w: f, file: f}
 	}
 	return &jsonLineLogger{w: os.Stdout}
 }

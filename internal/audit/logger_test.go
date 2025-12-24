@@ -12,8 +12,12 @@ func TestFileSinkPersistsAuditEntries(t *testing.T) {
 	t.Setenv("AGENTOS_AUDIT_SINK", "file:"+path)
 	t.Setenv("AGENTOS_SERVICE", "stack-a")
 
-	logger := NewFromEnv()
-	logger.Log(Entry{
+	sink := NewFromEnv()
+	t.Cleanup(func() {
+		_ = sink.Close()
+	})
+
+	sink.Log(Entry{
 		TenantID: "tnt_demo", Action: "runs.create", Resource: "run/test", Outcome: "allowed",
 	})
 
