@@ -4,9 +4,9 @@ name: agentos-edge
 # This is intentionally minimal and opt-in: it does not replace your future gateway story.
 #
 # Exposes:
-#   - stack-a edge:     http://localhost:9081  -> http://localhost:8081
-#   - stack-b edge:     http://localhost:9082  -> http://localhost:8082
-#   - federation edge:  http://localhost:9083  -> http://localhost:8083
+#   - stack-a edge:     http://localhost:9081  -> http://localhost:50081
+#   - stack-b edge:     http://localhost:9082  -> http://localhost:50082
+#   - federation edge:  http://localhost:9083  -> http://localhost:50083
 
 services:
   edge-stack-a:

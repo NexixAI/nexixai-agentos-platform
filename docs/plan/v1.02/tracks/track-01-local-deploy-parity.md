@@ -22,11 +22,13 @@ Do not change normative docs under `docs/product/agentos-prs/` or `docs/api/`.
 - Recommend a standard host-port block:
   - Stack A: 50081
   - Stack B: 50082
-  - Federation: 50083
-  - Prometheus: 59090
-  - Alertmanager: 59093
-  - Blackbox: 59115
-  - Grafana: 53000
+- Federation: 50083
+- Prometheus: 59090
+- Alertmanager: 59093
+- Blackbox: 59115
+- Grafana: 53000
+
+Host ports use the 5008x block because Windows can exclude 8081/8082/8083. Internal container ports stay 8081/8082/8083, but observability and hardening stacks probe the host ports (50081/50082/50083) to match the local compose mapping.
 
 2) **Credential helper traps**
 - Document how to recover when Docker Desktop credential helper breaks.
