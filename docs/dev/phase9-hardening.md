@@ -20,8 +20,8 @@ Run:
 docker compose -f deploy/observability/compose.alerting.yaml up -d
 ```
 Access:
-- Prometheus: http://localhost:9090
-- Alertmanager: http://localhost:9093
+- Prometheus: http://127.0.0.1:59090
+- Alertmanager: http://127.0.0.1:59093
 
 ### 2) Edge rate limiting (opt-in)
 - Nginx sits in front of each service and applies basic rate limiting and connection limits.
