@@ -17,7 +17,7 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
     ports:
-      - "9090:9090"
+      - "59090:9090"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -30,7 +30,7 @@ services:
   blackbox:
     image: prom/blackbox-exporter:v0.25.0
     ports:
-      - "9115:9115"
+      - "59115:9115"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -41,7 +41,7 @@ services:
   alertmanager:
     image: prom/alertmanager:v0.27.0
     ports:
-      - "9093:9093"
+      - "59093:9093"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -54,14 +54,14 @@ services:
   alertlogger:
     image: mendhak/http-https-echo:33
     ports:
-      - "8089:8080"
+      - "58089:8080"
     environment:
       - HTTP_PORT=8080
 
   grafana:
     image: grafana/grafana:11.1.0
     ports:
-      - "3000:3000"
+      - "53000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
