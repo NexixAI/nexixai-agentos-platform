@@ -32,4 +32,4 @@ Do not change normative docs under `docs/product/agentos-prs/` or `docs/api/`.
 
 ## Deliverables
 - Secret-loading mechanism (minimal)
-- Docs under `docs/plan/tracks/` explaining the prod path
+- Docs under `docs/plan/v1.02/tracks/` explaining the prod path
