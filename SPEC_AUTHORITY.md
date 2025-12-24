@@ -34,6 +34,8 @@ Legacy v1.02 paths remain as compatibility stubs; update links to the canonical 
 ## Process documents (non-normative)
 
 These documents guide execution and tracking but **never override normative specs**:
+- `docs/plan/v1.02/INDEX.md`
+- `docs/plan/v1.02/tracks/INDEX.md`
 - `docs/plan/agentos-v1.02-execution-plan.md`
 - `docs/plan/progress-log.md`
 - `docs/plan/pr-checklist.md`
