@@ -4,9 +4,9 @@ services:
   stack-a:
     build:
       context: ../..
-    command: ["serve","stack-a","--addr",":8081"]
+    command: ["serve","--addr",":8081","stack-a"]
     ports:
-      - "8081:8081"
+      - "50081:8081"
     environment:
       - AGENTOS_SERVICE=stack-a
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -18,9 +18,9 @@ services:
   stack-b:
     build:
       context: ../..
-    command: ["serve","stack-b","--addr",":8082"]
+    command: ["serve","--addr",":8082","stack-b"]
     ports:
-      - "8082:8082"
+      - "50082:8082"
     environment:
       - AGENTOS_SERVICE=stack-b
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -30,9 +30,9 @@ services:
   federation:
     build:
       context: ../..
-    command: ["serve","federation","--addr",":8083"]
+    command: ["serve","--addr",":8083","federation"]
     ports:
-      - "8083:8083"
+      - "50083:8083"
     environment:
       - AGENTOS_SERVICE=federation
       - AGENTOS_DEFAULT_TENANT=tnt_demo
