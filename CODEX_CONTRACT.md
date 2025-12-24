@@ -9,9 +9,9 @@ If any instruction conflicts with this contract, **this contract wins**.
 ## 0) Authority and Scope
 
 ### Source-of-truth precedence (locked)
-1) docs/product/agentos-prs/v1.02-schemas-appendix.md
-2) docs/product/agentos-prs/v1.02-prs.md
-3) docs/design/agentos-v1.02-design.md
+1) docs/product/agentos-prs/v1.02/schemas-appendix.md
+2) docs/product/agentos-prs/v1.02/prs.md
+3) docs/design/v1.02/agentos-design.md
 4) SPEC_AUTHORITY.md
 5) OpenAPI under docs/api/
 

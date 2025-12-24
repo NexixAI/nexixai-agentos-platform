@@ -5,10 +5,10 @@ This folder contains the authoritative product requirements and implementation c
 ## Documents
 
 - **Product Requirements & Specifications (PRS)**  
-  - `product/agentos-prs/v1.02-prs.md`
+  - `docs/product/agentos-prs/v1.02/prs.md`
 
 - **Schemas Appendix (Implementation Contracts)**  
-  - `product/agentos-prs/v1.02-schemas-appendix.md`
+  - `docs/product/agentos-prs/v1.02/schemas-appendix.md`
 
 ## Naming (v1.02)
 
@@ -19,6 +19,6 @@ AgentOS is composed of two stacks per node/environment:
 
 ## Change process
 
-1. Update the PRS (`v1.02-prs.md`) first.
-2. Update the Schemas Appendix (`v1.02-schemas-appendix.md`) to match.
+1. Update the PRS (`docs/product/agentos-prs/v1.02/prs.md`) first.
+2. Update the Schemas Appendix (`docs/product/agentos-prs/v1.02/schemas-appendix.md`) to match.
 3. Bump the version (e.g., v1.03) when changes are accepted.
