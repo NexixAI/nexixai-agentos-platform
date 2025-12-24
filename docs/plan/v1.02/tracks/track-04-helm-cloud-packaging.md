@@ -35,4 +35,4 @@ Do not change normative docs under `docs/product/agentos-prs/` or `docs/api/`.
 
 ## Deliverables
 - `deploy/k8s/*`
-- Packaging docs in `docs/plan/tracks/`
+- Packaging docs in `docs/plan/v1.02/tracks/`

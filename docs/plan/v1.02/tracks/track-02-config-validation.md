@@ -21,7 +21,7 @@ Do not change normative docs under `docs/product/agentos-prs/` or `docs/api/`.
 - Avoid defaulting to weak auth when auth is expected.
 
 3) **Configuration matrix doc**
-- Add a doc listing key env vars, their meaning, and which modes require them.
+- Add a doc listing key env vars, their meaning, and which modes require them (e.g., `docs/plan/v1.02/tracks/config-matrix.md`).
 
 ## Required gates
 - `go test ./...`
