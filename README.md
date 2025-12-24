@@ -69,10 +69,11 @@ Bring up the platform
 ./agentos validate
 ./agentos status
 
-Default health endpoints
-	•	Stack A: http://localhost:8081/v1/health
-	•	Stack B: http://localhost:8082/v1/health
-	•	Federation: http://localhost:8083/v1/federation/health
+	Default health endpoints
+		•	Stack A: http://127.0.0.1:50081/v1/health
+		•	Stack B: http://127.0.0.1:50082/v1/health
+		•	Federation: http://127.0.0.1:50083/v1/federation/health
+		•	Windows note: use `curl.exe -4 http://127.0.0.1:PORT/...` (PowerShell `curl` is Invoke-WebRequest). Ports in the 808x range can be reserved/excluded on Windows; local files use 5008x to avoid that.
 
 Tear down
 
