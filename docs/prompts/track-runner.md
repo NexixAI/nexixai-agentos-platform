@@ -28,7 +28,7 @@ You must operate **SEQUENTIALLY by track** using `configs/NEXT_TRACK.json` as th
 1) Read `configs/NEXT_TRACK.json`.
 2) Let `TRACK_NUM = next_track` and `plan_version = plan_version`.
 3) Resolve `TRACK_DOC = docs/plan/${plan_version}/tracks/track-${TRACK_NUM}-*.md` (or map via `docs/plan/${plan_version}/tracks/INDEX.md`).
-4) If the canonical `TRACK_DOC` does not exist, temporarily fallback to `docs/plan/tracks/*`. If neither exists, STOP and report.
+4) If the canonical `TRACK_DOC` does not exist, temporarily fallback to the legacy track stub for that number. If neither exists, STOP and report.
 
 ### BRANCH / PR RULES
 - Fetch latest `main`.
