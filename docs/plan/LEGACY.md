@@ -30,3 +30,4 @@ The files left at `docs/plan/` and `docs/plan/tracks/` are **compatibility stubs
 ## Maintenance
 - Any new phase/track docs should be added only under `docs/plan/v1.02/`.
 - Keep stub text consistent; no extra content belongs in legacy paths.
+- Run `scripts/docs/check-canonical-links.ps1` before publishing docs changes to catch legacy path regressions.
