@@ -279,22 +279,35 @@ Finalize invariants, docs coherence, and deployability.
 
 ## What Comes Next (Not a Phase)
 
-The system is **feature-complete** for v1.02.
+The system is feature-complete for v1.02.
 
-Remaining work is **environmental**, not architectural:
+Remaining work is environmental and operational, not architectural. These tracks must preserve all Phase 0–16 invariants and must not introduce new product behavior without PRS + Design updates.
 
-- Local deployment parity with CI
-- Production-grade configuration validation
-- Secrets management integration (prod)
-- Optional Helm / cloud packaging
+### Deployment / Operability Tracks (v1.02)
 
-These are **deployment tracks**, not new phases, and must **not**
-introduce new product behavior without PRS updates.
+These are executed as PRs, but they are not “phases” of v1.02.
+
+1) **Local deployment parity with CI**  
+   - Goal: one-command local bring-up across Windows/macOS/Linux; eliminate port conflicts and credential-helper traps.
+   - Evidence: local smoke script + documented reset/nuke flows.
+
+2) **Production-grade configuration validation**  
+   - Goal: fail-fast on misconfig, produce clear diagnostics, no silent defaults that reduce safety.
+   - Evidence: config validation tests + documented configuration matrix.
+
+3) **Secrets management integration (prod path)**  
+   - Goal: no plaintext secrets in repo; support secret manager + rotation; audit access.
+   - Evidence: documented integration and tests that secrets do not leak to logs.
+
+4) **Optional Helm / cloud packaging**  
+   - Goal: reproducible k8s deployment templates; preserve tenancy + audit + federation invariants.
+   - Evidence: packaging docs + minimal example environment.
 
 ---
 
 ## Rules Going Forward
 
-- Do **not** add new phases without PRS + Design updates.
-- Do **not** modify completed phase docs retroactively.
+- **Do not add new phases to v1.02** without PRS + Design updates.
+- Do not modify completed phase docs retroactively.
 - Deployment fixes must preserve all Phase 0–16 invariants.
+- If new behavior is required (example: federation mTLS, formal idempotency keys, new governance semantics), create **v1.03** PRS + Design first, then add phases under that version.
