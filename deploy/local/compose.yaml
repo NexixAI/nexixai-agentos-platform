@@ -6,7 +6,9 @@ services:
       context: ../..
     command: ["serve","stack-a","--addr",":8081"]
     ports:
-      - "8081:8081"
+      - "28081:8081"
+    volumes:
+      - agentos-local-data:/workspace/data
     environment:
       - AGENTOS_SERVICE=stack-a
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -20,7 +22,9 @@ services:
       context: ../..
     command: ["serve","stack-b","--addr",":8082"]
     ports:
-      - "8082:8082"
+      - "28082:8082"
+    volumes:
+      - agentos-local-data:/workspace/data
     environment:
       - AGENTOS_SERVICE=stack-b
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -32,9 +36,14 @@ services:
       context: ../..
     command: ["serve","federation","--addr",":8083"]
     ports:
-      - "8083:8083"
+      - "28083:8083"
+    volumes:
+      - agentos-local-data:/workspace/data
     environment:
       - AGENTOS_SERVICE=federation
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_FED_FORWARD_INDEX_FILE=/workspace/data/federation/forward-index.json
       - AGENTOS_AUDIT_SINK=file:/workspace/data/federation/audit.log
+
+volumes:
+  agentos-local-data:
