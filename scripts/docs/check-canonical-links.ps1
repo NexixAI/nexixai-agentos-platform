@@ -21,7 +21,10 @@ $ignorePatterns = @(
   "docs/product/agentos-prs/v1.02-schemas-appendix.md",
   "docs/design/agentos-v1.02-design.md",
   "docs/product/agentos-prs/v1.02/*.md",
-  "docs/design/v1.02/*.md"
+  "docs/design/v1.02/*.md",
+  "docs/plan/agentos-v1.02-execution-plan.md",
+  "docs/plan/progress-log.md",
+  "docs/plan/pr-checklist.md"
 )
 
 function ShouldIgnore($path) {
