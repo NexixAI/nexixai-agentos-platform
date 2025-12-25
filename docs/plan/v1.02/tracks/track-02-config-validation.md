@@ -29,4 +29,4 @@ Do not change normative docs under `docs/product/agentos-prs/` or `docs/api/`.
 
 ## Deliverables
 - Validation logic + tests
-- `docs/plan/tracks/config-matrix.md` (or similar) describing the config surface
+- `docs/plan/v1.02/tracks/config-matrix.md` describing the config surface
