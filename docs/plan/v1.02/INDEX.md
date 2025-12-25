@@ -22,6 +22,8 @@ Authoritative conflict rules are defined in `SPEC_AUTHORITY.md`.
 - **Design (Architecture + Enforcement Points)**  
   `docs/design/v1.02/agentos-design.md`
 
+Docs link guard: macOS/Linux `./scripts/docs/check-canonical-links.sh`; Windows `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/docs/check-canonical-links.ps1`.
+
 ---
 
 ## Phase Status Summary
