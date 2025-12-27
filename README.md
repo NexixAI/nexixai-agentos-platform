@@ -53,11 +53,11 @@ Box 2/3 — Worker Nodes (GPU)
 /AGENTS.md
 
 /docs/
-/api/ (OpenAPI specs)
-/design/ (canonical design: docs/design/v1.02/)
-product/ (canonical PRS & schemas: docs/product/agentos-prs/v1.02/)
-plan/v1.02/ (canonical plan docs)
-templates/
+/docs/api/ (OpenAPI specs)
+/docs/design/v1.02/ (canonical design)
+/docs/product/agentos-prs/v1.02/ (canonical PRS & schemas)
+/docs/plan/v1.02/ (canonical plan docs: index, phases, tracks)
+/docs/templates/
 
 /cmd/agentos/
 /agentorchestrator/
