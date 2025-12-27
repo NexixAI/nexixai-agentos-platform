@@ -3,7 +3,7 @@ info:
   title: NexixAI AgentOS — Federation API
   version: 1.0.2
   description: 'Federation connects AgentOS nodes across environments (peer info/capabilities,
-    run forwarding, and event backhaul). Contract authority: docs/product/agentos-prs/v1.02-schemas-appendix.md'
+    run forwarding, and event backhaul). Contract authority: docs/product/agentos-prs/v1.02/schemas-appendix.md'
 servers:
 - url: /
 tags:

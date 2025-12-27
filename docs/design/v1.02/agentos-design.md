@@ -4,8 +4,8 @@ This document defines the **implementation-shaping architecture** for AgentOS v1
 It is subordinate to the PRS and Schemas Appendix per `SPEC_AUTHORITY.md`.
 
 ## References (authoritative)
-- PRS: `docs/product/agentos-prs/v1.02-prs.md`
-- Schemas Appendix: `docs/product/agentos-prs/v1.02-schemas-appendix.md`
+- PRS: `docs/product/agentos-prs/v1.02/prs.md`
+- Schemas Appendix: `docs/product/agentos-prs/v1.02/schemas-appendix.md`
 
 ---
 

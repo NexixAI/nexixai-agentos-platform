@@ -8,12 +8,7 @@ It does **not** change product requirements. It executes the plan in `docs/plan/
 
 ## Inputs (single source of truth)
 
-Codex must read the next phase number and plan version from the **first existing** file in this order:
-
-1) `configs/NEXT_PHASE.json` (primary)  
-2) `docs/plan/NEXT_PHASE.json` (fallback)
-
-If neither exists: **STOP and report**.
+Codex must read the next phase number and plan version from `configs/NEXT_PHASE.json`. If it does not exist: **STOP and report**.
 
 Expected format:
 
@@ -44,16 +39,12 @@ Expected format:
 
 ## Phase selection
 
-1) Read `PHASE_NUM` from the first existing file in:
-   - `configs/NEXT_PHASE.json`, else
-   - `docs/plan/NEXT_PHASE.json`
+1) Read `PHASE_NUM` and `plan_version` from `configs/NEXT_PHASE.json`.
 
-2) Read `plan_version` from the same file.
-
-3) Let:
+2) Let:
    - `PHASE_DOC = docs/plan/${plan_version}/phases/phase-${PHASE_NUM}.md`
 
-4) If `PHASE_DOC` does not exist: **STOP and report**.
+3) If `PHASE_DOC` does not exist: **STOP and report**.
 
 ---
 

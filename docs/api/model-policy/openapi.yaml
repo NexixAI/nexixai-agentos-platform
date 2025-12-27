@@ -6,7 +6,7 @@ info:
     Model Policy provides governed, vendor-agnostic model access ("Bedrock-like") for Agent Orchestrator and trusted internal callers.
 
     Contract authority:
-    - docs/product/agentos-prs/v1.02-schemas-appendix.md (Section E)
+    - docs/product/agentos-prs/v1.02/schemas-appendix.md (Section E)
 
 servers:
   - url: /
