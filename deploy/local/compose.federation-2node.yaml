@@ -3,11 +3,11 @@ name: agentos-federation-2node
 # This compose file runs TWO AgentOS nodes on one host for Phase 8 federation testing.
 # It intentionally uses the official golang image + bind-mounts the repo so you do NOT need a Dockerfile.
 #
-# Node A: stack-a 8081, stack-b 8082, federation 8083 (internal-only)
-# Node B: stack-a 8084, stack-b 8085, federation 8086 (internal-only)
+# Node A: agent-orchestrator 8081, model-policy 8082, federation 8083 (internal-only)
+# Node B: agent-orchestrator 8084, model-policy 8085, federation 8086 (internal-only)
 
 services:
-  nodea-stack-a:
+  nodea-agent-orchestrator:
     image: golang:1.22
     working_dir: /workspace
     volumes:
@@ -16,28 +16,28 @@ services:
       - ../..:/workspace
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
-    command: ["go","run","./cmd/agentos","serve","--addr",":8081","stack-a"]
+    command: ["go","run","./cmd/agentos","serve","--addr",":8081","agent-orchestrator"]
     environment:
-      - AGENTOS_SERVICE=stack-a
+      - AGENTOS_SERVICE=agent-orchestrator
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_RUN_CREATE_QPS=10
       - AGENTOS_QUOTA_CONCURRENT_RUNS=25
-      - AGENTOS_RUN_STORE_FILE=/workspace/data/nodea/stack-a/runs.json
-      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodea/stack-a/audit.log
+      - AGENTOS_RUN_STORE_FILE=/workspace/data/nodea/agent-orchestrator/runs.json
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodea/agent-orchestrator/audit.log
 
-  nodea-stack-b:
+  nodea-model-policy:
     image: golang:1.22
     working_dir: /workspace
     volumes:
       - ../..:/workspace
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
-    command: ["go","run","./cmd/agentos","serve","--addr",":8082","stack-b"]
+    command: ["go","run","./cmd/agentos","serve","--addr",":8082","model-policy"]
     environment:
-      - AGENTOS_SERVICE=stack-b
+      - AGENTOS_SERVICE=model-policy
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_INVOKE_QPS=20
-      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodea/stack-b/audit.log
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodea/model-policy/audit.log
 
   nodea-federation:
     image: golang:1.22
@@ -57,35 +57,35 @@ services:
       - AGENTOS_REGION=local
       - AGENTOS_PEERS_FILE=/workspace/deploy/local/peers.seed.json
 
-  nodeb-stack-a:
+  nodeb-agent-orchestrator:
     image: golang:1.22
     working_dir: /workspace
     volumes:
       - ../..:/workspace
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
-    command: ["go","run","./cmd/agentos","serve","--addr",":8084","stack-a"]
+    command: ["go","run","./cmd/agentos","serve","--addr",":8084","agent-orchestrator"]
     environment:
-      - AGENTOS_SERVICE=stack-a
+      - AGENTOS_SERVICE=agent-orchestrator
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_RUN_CREATE_QPS=10
       - AGENTOS_QUOTA_CONCURRENT_RUNS=25
-      - AGENTOS_RUN_STORE_FILE=/workspace/data/nodeb/stack-a/runs.json
-      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodeb/stack-a/audit.log
+      - AGENTOS_RUN_STORE_FILE=/workspace/data/nodeb/agent-orchestrator/runs.json
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodeb/agent-orchestrator/audit.log
 
-  nodeb-stack-b:
+  nodeb-model-policy:
     image: golang:1.22
     working_dir: /workspace
     volumes:
       - ../..:/workspace
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
-    command: ["go","run","./cmd/agentos","serve","--addr",":8085","stack-b"]
+    command: ["go","run","./cmd/agentos","serve","--addr",":8085","model-policy"]
     environment:
-      - AGENTOS_SERVICE=stack-b
+      - AGENTOS_SERVICE=model-policy
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_INVOKE_QPS=20
-      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodeb/stack-b/audit.log
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/nodeb/model-policy/audit.log
 
   nodeb-federation:
     image: golang:1.22

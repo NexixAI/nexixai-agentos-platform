@@ -1,9 +1,9 @@
 openapi: 3.0.3
 info:
-  title: NexixAI AgentOS — Stack B (Model Services) API
+  title: NexixAI AgentOS — Model Policy (Model Services) API
   version: "1.0.2"
   description: |
-    Stack B provides governed, vendor-agnostic model access ("Bedrock-like") for Stack A and trusted internal callers.
+    Model Policy provides governed, vendor-agnostic model access ("Bedrock-like") for Agent Orchestrator and trusted internal callers.
 
     Contract authority:
     - docs/product/agentos-prs/v1.02-schemas-appendix.md (Section E)
@@ -25,7 +25,7 @@ paths:
     get:
       tags: [Health]
       summary: Health check
-      operationId: stackBHealth
+      operationId: modelPolicyHealth
       responses:
         "200":
           description: OK
@@ -64,7 +64,7 @@ paths:
       tags: [Models]
       summary: Invoke a model operation (chat or embed)
       description: |
-        Canonical Stack A → Stack B invocation. Operation is selected by `request.operation`.
+        Canonical Agent Orchestrator → Model Policy invocation. Operation is selected by `request.operation`.
 
         - `operation=chat` uses `ChatInput` + `ChatGeneration`.
         - `operation=embed` uses `EmbeddingInput`.
@@ -193,7 +193,7 @@ components:
       required: [status, service, version]
       properties:
         status: { type: string, enum: [ok] }
-        service: { type: string, enum: [stack-b] }
+        service: { type: string, enum: [model-policy] }
         version: { type: string }
 
     # -------------------------

@@ -8,9 +8,9 @@ import (
 )
 
 func TestFileSinkPersistsAuditEntries(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "audit", "stack-a.log")
+	path := filepath.Join(t.TempDir(), "audit", "agent-orchestrator.log")
 	t.Setenv("AGENTOS_AUDIT_SINK", "file:"+path)
-	t.Setenv("AGENTOS_SERVICE", "stack-a")
+	t.Setenv("AGENTOS_SERVICE", "agent-orchestrator")
 
 	sink := NewFromEnv()
 	t.Cleanup(func() {

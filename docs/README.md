@@ -12,10 +12,12 @@ This folder contains the authoritative product requirements and implementation c
 
 ## Naming (v1.02)
 
-AgentOS is composed of two stacks per node/environment:
+AgentOS control plane is composed of two services per environment:
 
-- **Stack A: Orchestration Stack** — agent lifecycle, run execution, tools, memory, events, federation
-- **Stack B: Model Services Stack** — model access, routing, policy/governance, metering, budgets
+- **Agent Orchestrator** — agent lifecycle, run execution, tools, memory, events, federation
+- **Model Policy** — model access, routing, policy/governance, metering, budgets
+
+Baseline tenancy model: Model A (shared control-plane services with logical isolation). Model B (per-tenant pairs) is optional deployment only.
 
 ## Change process
 

@@ -1,4 +1,4 @@
-package stacka
+package agentorchestrator
 
 import (
 	"bufio"
@@ -58,7 +58,7 @@ func (s *Server) Handler() http.Handler {
 
 	h := middleware.WithAuth(mux)
 	h = middleware.EnsureRequestID(h)
-	h = metrics.Instrument("stack-a", h)
+	h = metrics.Instrument("agent-orchestrator", h)
 	return h
 }
 
@@ -67,7 +67,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed", httpx.CorrelationID(r), false)
 		return
 	}
-	httpx.JSON(w, http.StatusOK, types.HealthResponse{Status: "ok", Service: "stack-a", Version: s.version})
+	httpx.JSON(w, http.StatusOK, types.HealthResponse{Status: "ok", Service: "agent-orchestrator", Version: s.version})
 }
 
 func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
@@ -87,20 +87,20 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !s.limiter.AllowQPS(tenantID) {
-		metrics.IncQuotaDenied("stack-a", "runs_create_qps")
+		metrics.IncQuotaDenied("agent-orchestrator", "runs_create_qps")
 		httpx.Error(w, http.StatusTooManyRequests, "quota_exceeded", "run create QPS exceeded", httpx.CorrelationID(r), true)
 		s.audit.Log(audit.Entry{
-			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "runs.create", Resource: "stack-a", Outcome: "denied",
+			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "runs.create", Resource: "agent-orchestrator", Outcome: "denied",
 			CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
 			Meta: map[string]any{"reason": "qps_exceeded"},
 		})
 		return
 	}
 	if !s.limiter.TryIncConcurrent(tenantID) {
-		metrics.IncQuotaDenied("stack-a", "runs_concurrency")
+		metrics.IncQuotaDenied("agent-orchestrator", "runs_concurrency")
 		httpx.Error(w, http.StatusTooManyRequests, "quota_exceeded", "concurrent runs exceeded", httpx.CorrelationID(r), true)
 		s.audit.Log(audit.Entry{
-			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "runs.create", Resource: "stack-a", Outcome: "denied",
+			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "runs.create", Resource: "agent-orchestrator", Outcome: "denied",
 			CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
 			Meta: map[string]any{"reason": "concurrent_exceeded"},
 		})

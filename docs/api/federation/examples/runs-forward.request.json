@@ -12,7 +12,7 @@
     "auth": {
       "tenant_id": "tnt_demo",
       "principal": {
-        "principal_id": "svc_stack_a",
+        "principal_id": "svc_agent-orchestrator",
         "principal_type": "service"
       },
       "scopes": [

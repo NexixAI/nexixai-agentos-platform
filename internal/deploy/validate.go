@@ -13,12 +13,12 @@ import (
 )
 
 type Validator struct {
-	StackA      string
-	StackB      string
-	Fed         string
-	RepoRoot    string
-	TenantID    string
-	PrincipalID string
+	AgentOrchestrator string
+	ModelPolicy       string
+	Fed               string
+	RepoRoot          string
+	TenantID          string
+	PrincipalID       string
 }
 
 func (v Validator) tenant() string {
@@ -38,31 +38,31 @@ func (v Validator) principal() string {
 func (v Validator) ValidateAll() ([]CheckResult, error) {
 	checks := []CheckResult{}
 	// Health
-	checks = append(checks, v.checkGET("stack-a health", v.StackA+"/v1/health"))
-	checks = append(checks, v.checkGET("stack-b health", v.StackB+"/v1/health"))
+	checks = append(checks, v.checkGET("agent-orchestrator health", v.AgentOrchestrator+"/v1/health"))
+	checks = append(checks, v.checkGET("model-policy health", v.ModelPolicy+"/v1/health"))
 	checks = append(checks, v.checkGET("federation health", v.Fed+"/v1/federation/health"))
 
 	// Metrics
-	checks = append(checks, v.checkGET("stack-a metrics", v.StackA+"/metrics"))
-	checks = append(checks, v.checkGET("stack-b metrics", v.StackB+"/metrics"))
+	checks = append(checks, v.checkGET("agent-orchestrator metrics", v.AgentOrchestrator+"/metrics"))
+	checks = append(checks, v.checkGET("model-policy metrics", v.ModelPolicy+"/metrics"))
 	checks = append(checks, v.checkGET("federation metrics", v.Fed+"/metrics"))
 
-	// Smoke: Stack A create run using canonical request
-	reqPath := filepath.Join(v.RepoRoot, "docs", "api", "stack-a", "examples", "runs-create.request.json")
+	// Smoke: Agent Orchestrator create run using canonical request
+	reqPath := filepath.Join(v.RepoRoot, "docs", "api", "agent-orchestrator", "examples", "runs-create.request.json")
 	b, err := os.ReadFile(reqPath)
 	if err == nil {
-		checks = append(checks, v.checkPOST("stack-a create run", v.StackA+"/v1/agents/agt_demo/runs", b))
+		checks = append(checks, v.checkPOST("agent-orchestrator create run", v.AgentOrchestrator+"/v1/agents/agt_demo/runs", b))
 	} else {
-		checks = append(checks, CheckResult{Name: "stack-a create run", OK: false, Detail: "missing example file", URL: reqPath})
+		checks = append(checks, CheckResult{Name: "agent-orchestrator create run", OK: false, Detail: "missing example file", URL: reqPath})
 	}
 
-	// Smoke: Stack B invoke using canonical request (chat.request.json)
-	invPath := filepath.Join(v.RepoRoot, "docs", "api", "stack-b", "examples", "chat.request.json")
+	// Smoke: Model Policy invoke using canonical request (chat.request.json)
+	invPath := filepath.Join(v.RepoRoot, "docs", "api", "model-policy", "examples", "chat.request.json")
 	b2, err2 := os.ReadFile(invPath)
 	if err2 == nil {
-		checks = append(checks, v.checkPOST("stack-b invoke", v.StackB+"/v1/models:invoke", b2))
+		checks = append(checks, v.checkPOST("model-policy invoke", v.ModelPolicy+"/v1/models:invoke", b2))
 	} else {
-		checks = append(checks, CheckResult{Name: "stack-b invoke", OK: false, Detail: "missing example file", URL: invPath})
+		checks = append(checks, CheckResult{Name: "model-policy invoke", OK: false, Detail: "missing example file", URL: invPath})
 	}
 
 	// Optional observability checks (Prometheus/Grafana) if env provided

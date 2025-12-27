@@ -228,49 +228,49 @@ components:
       content:
         application/json:
           schema:
-            $ref: ../stack-a/openapi.yaml#/components/schemas/ErrorResponse
+            $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/ErrorResponse
     Unauthorized:
       description: Unauthorized
       content:
         application/json:
           schema:
-            $ref: ../stack-a/openapi.yaml#/components/schemas/ErrorResponse
+            $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/ErrorResponse
     Forbidden:
       description: Forbidden
       content:
         application/json:
           schema:
-            $ref: ../stack-a/openapi.yaml#/components/schemas/ErrorResponse
+            $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/ErrorResponse
     NotFound:
       description: Not found
       content:
         application/json:
           schema:
-            $ref: ../stack-a/openapi.yaml#/components/schemas/ErrorResponse
+            $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/ErrorResponse
     Conflict:
       description: Conflict
       content:
         application/json:
           schema:
-            $ref: ../stack-a/openapi.yaml#/components/schemas/ErrorResponse
+            $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/ErrorResponse
     RateLimited:
       description: Rate limited
       content:
         application/json:
           schema:
-            $ref: ../stack-a/openapi.yaml#/components/schemas/ErrorResponse
+            $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/ErrorResponse
     InternalError:
       description: Internal error
       content:
         application/json:
           schema:
-            $ref: ../stack-a/openapi.yaml#/components/schemas/ErrorResponse
+            $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/ErrorResponse
     ServiceUnavailable:
       description: Service unavailable
       content:
         application/json:
           schema:
-            $ref: ../stack-a/openapi.yaml#/components/schemas/ErrorResponse
+            $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/ErrorResponse
   schemas:
     HealthResponse:
       type: object
@@ -323,12 +323,12 @@ components:
     PeerEndpoints:
       type: object
       required:
-      - stack_a_base_url
-      - stack_b_base_url
+      - agent-orchestrator_base_url
+      - model-policy_base_url
       properties:
-        stack_a_base_url:
+        agent-orchestrator_base_url:
           type: string
-        stack_b_base_url:
+        model-policy_base_url:
           type: string
     PeerBuild:
       type: object
@@ -428,7 +428,7 @@ components:
         target_selector:
           $ref: '#/components/schemas/TargetSelector'
         auth:
-          $ref: ../stack-b/openapi.yaml#/components/schemas/AuthContext
+          $ref: ../model-policy/openapi.yaml#/components/schemas/AuthContext
         run_request:
           $ref: '#/components/schemas/RunForwardRequest'
         traceparent:
@@ -468,13 +468,13 @@ components:
         agent_id:
           type: string
         input:
-          $ref: ../stack-a/openapi.yaml#/components/schemas/RunInput
+          $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/RunInput
         context:
           $ref: '#/components/schemas/RunForwardContext'
         tooling:
-          $ref: ../stack-a/openapi.yaml#/components/schemas/Tooling
+          $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/Tooling
         run_options:
-          $ref: ../stack-a/openapi.yaml#/components/schemas/RunOptions
+          $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/RunOptions
         idempotency_key:
           type: string
           maxLength: 256
@@ -542,7 +542,7 @@ components:
         events:
           type: array
           items:
-            $ref: ../stack-a/openapi.yaml#/components/schemas/EventEnvelope
+            $ref: ../agent-orchestrator/openapi.yaml#/components/schemas/EventEnvelope
         traceparent:
           type: string
     FederationEventIngestResponse:

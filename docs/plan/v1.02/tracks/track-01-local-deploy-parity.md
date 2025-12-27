@@ -20,8 +20,8 @@ Do not change normative docs under `docs/product/agentos-prs/` or `docs/api/`.
 1) **Port collision avoidance (Windows-friendly)**
 - Default host ports must avoid Windows excluded ranges and common conflicts.
 - Recommend a standard host-port block:
-  - Stack A: 50081
-  - Stack B: 50082
+  - Agent Orchestrator: 50081
+  - Model Policy: 50082
 - Federation: 50083
 - Prometheus: 59090
 - Alertmanager: 59093
@@ -43,7 +43,7 @@ Host ports use the 5008x block because Windows can exclude 8081/8082/8083. Inter
 
 4) **Local smoke script**
 - Provide (or update) a script that:
-  - hits Stack A/B health endpoints and federation health
+  - hits Agent Orchestrator/B health endpoints and federation health
   - uses curl.exe on Windows and forces IPv4
   - has retries with a bounded timeout
   - exits non-zero on failure

@@ -7,17 +7,17 @@ Phase 7 makes multi-tenancy *enforced* (not a comment in a doc).
 - Requests derive an **AuthContext** from headers.
 - A **tenant_id** is required for tenant-scoped endpoints.
   - For local/dev “works out of the box”, `AGENTOS_DEFAULT_TENANT` may supply a default.
-- Stack A run storage is keyed as `(tenant_id, run_id)`.
+- Agent Orchestrator run storage is keyed as `(tenant_id, run_id)`.
   - Cross-tenant access does not leak existence (returns 404).
 
 ## Quotas
 
 In-memory per-tenant gates (Phase 7 scaffold):
 
-- Stack A:
+- Agent Orchestrator:
   - `AGENTOS_QUOTA_RUN_CREATE_QPS` (default: 10)
   - `AGENTOS_QUOTA_CONCURRENT_RUNS` (default: 25)
-- Stack B:
+- Model Policy:
   - `AGENTOS_QUOTA_INVOKE_QPS` (default: 20)
 
 Exceeding a quota returns:

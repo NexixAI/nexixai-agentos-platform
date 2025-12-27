@@ -1,15 +1,15 @@
 # NexixAI AgentOS v1.02 Product Requirements and Specifications
 
 This document is **AgentOS v1.02 PRS** for **NexixAI**. It is **v1.01 exactly as-is**, with **additions and necessary changes to support multi-tenancy**. The two stacks continue to use **generic names**:
-- **Stack A: Orchestration Stack**
-- **Stack B: Model Services Stack**
+- **Agent Orchestrator: Orchestration Stack**
+- **Model Policy: Model Services Stack**
 
 ---
 
 ## 1) Product vision
 **AgentOS** is a portable, federatable, **multi-tenant** agent platform that:
-- Runs agents safely and repeatably (**Stack A**)
-- Provides governed, vendor-agnostic model access (**Stack B**)
+- Runs agents safely and repeatably (**Agent Orchestrator**)
+- Provides governed, vendor-agnostic model access (**Model Policy**)
 - Can be deployed out-of-the-box with one command, fully observable, and operator-friendly
 - Can connect multiple nodes/environments into a coherent system without tight coupling
 - Supports multiple tenants with isolation, quotas, and auditability
@@ -27,7 +27,7 @@ This document is **AgentOS v1.02 PRS** for **NexixAI**. It is **v1.01 exactly as
 
 ## 3.1 Two-stack architecture (per node/environment)
 
-### Stack A: Orchestration Stack
+### Agent Orchestrator: Orchestration Stack
 **Responsibilities**
 - Agent lifecycle (deployable agents), run lifecycle (invocations)
 - Planning/execution loop, tool calling, retries/timeouts
@@ -36,7 +36,7 @@ This document is **AgentOS v1.02 PRS** for **NexixAI**. It is **v1.01 exactly as
 - Federation client/server for run forwarding and event streaming
 - **Tenant isolation and enforcement** for agents/runs/events/tools/memory/state (new)
 
-### Stack B: Model Services Stack
+### Model Policy: Model Services Stack
 **Responsibilities**
 - Stable model interface (chat, embeddings) independent of vendor/backend
 - Policy & governance gates (PII redaction, allow/deny, tool-use permissions)
@@ -57,7 +57,7 @@ This document is **AgentOS v1.02 PRS** for **NexixAI**. It is **v1.01 exactly as
 
 ---
 
-# 4) External product-facing API (Stack A)
+# 4) External product-facing API (Agent Orchestrator)
 
 ## 4.1 Public objects
 - **Tenant** (new): organizational boundary for isolation, quotas, and policy  
@@ -102,8 +102,8 @@ This document is **AgentOS v1.02 PRS** for **NexixAI**. It is **v1.01 exactly as
 ## 5.1 Non-negotiable rule
 **Modules do not call each other via concrete implementations.** They call **ports** (interfaces). Implementations are adapters.
 
-## 5.2 Required ports (Stack A)
-1) **Model Port** (Stack A → Stack B)  
+## 5.2 Required ports (Agent Orchestrator)
+1) **Model Port** (Agent Orchestrator → Model Policy)  
    - `chat(request) -> response`  
    - `embed(request) -> response`  
    - `policy_check(request) -> decision`  
@@ -136,16 +136,16 @@ Adding a new component (new DB, vector store, queue, model backend) should be:
 
 ---
 
-# 6) Stack B API + governance
+# 6) Model Policy API + governance
 
-## 6.1 Stack B endpoints
+## 6.1 Model Policy endpoints
 Prefer OpenAI-compat where possible:
 - `POST /v1/chat/completions`
 - `POST /v1/embeddings`
 - `POST /v1/policy/check` (or moderation-like)
 - `GET /v1/models`
 
-## 6.2 Stack B request/response requirements
+## 6.2 Model Policy request/response requirements
 Every response must include:
 - `usage`: tokens, latency  
 - `policy_outcome`: allowed/blocked/redacted + reasons  
@@ -158,7 +158,7 @@ Every response must include:
   - budgets/quotas (tokens/cost caps)
   - policy gates (block/redact rules)
 
-## 6.3 Stack B capabilities
+## 6.3 Model Policy capabilities
 - Backend plugins: `ollama`, `vllm`, `tgi`, `openai`, `anthropic`, `aws-bedrock`, etc.
 - Policy gates:
   - PII detection/redaction (baseline)
@@ -275,19 +275,19 @@ Must include:
 # 9) Observability and alerting spec
 
 ## 9.1 Minimum observability stack (OOTB)
-- Metrics: Prometheus scraping Stack A, Stack B, gateway, system exporters
+- Metrics: Prometheus scraping Agent Orchestrator, Model Policy, gateway, system exporters
 - Dashboards: Grafana provisioned with core dashboards
 - Logs: structured JSON logs with `run_id`, `trace_id`, `tenant_id`
 - Traces: OpenTelemetry Collector + backend (Tempo/Jaeger)
 
 ## 9.2 Required metrics
-**Stack A**
+**Agent Orchestrator**
 - run_count, run_success, run_failure
 - run_latency_ms (p50/p95)
 - step_latency_ms, tool_latency_ms, tool_error_rate
 - queue_depth, active_runs
 
-**Stack B**
+**Model Policy**
 - model_request_count, model_error_rate
 - token_usage, cost_estimate
 - policy_block_count, redaction_count
@@ -347,7 +347,7 @@ Must include:
 
 ## 10.3 Audit logging
 - Runs: who invoked what agent, what policy context
-- Stack B: model request metadata, policy outcomes, routing decisions
+- Model Policy: model request metadata, policy outcomes, routing decisions
 - Federation: peer identity, forwarded runs, event replication actions
 
 **Multi-tenancy audit additions (new):**
@@ -364,7 +364,7 @@ Must include:
   - start a sample agent run
   - stream events and complete
   - execute at least one tool call
-  - execute at least one model call through Stack B with policy check
+  - execute at least one model call through Model Policy with policy check
   - verify metrics changed (within 60 seconds)
 
 **Multi-tenancy deployment tests (new):**
@@ -425,8 +425,8 @@ A v1 release is “done” when:
 # 14) Suggested repo spec layout (v1)
 - `agentos/` (CLI + phase runner)
 - `deploy/` (defaults, compose/helm, seed, health, reports)
-- `stack-a/` (public API, runtime, ports, adapters)
-- `stack-b/` (API, providers, policy, routing)
+- `agent-orchestrator/` (public API, runtime, ports, adapters)
+- `model-policy/` (API, providers, policy, routing)
 - `federation/` (shared schemas + peer endpoints)
 - `observability/` (dashboards, rules, collector config)
 - `runbooks/` (operator docs)
@@ -444,15 +444,15 @@ A v1 release is “done” when:
 **Isolation level:** logical isolation (tenant-scoped keys/tables/namespaces) with an upgrade path to stronger isolation.
 
 Tenant-scoped partitions:
-- Stack A: agents, runs, run events, tool registry/permissions, memory namespaces, run state
-- Stack B: entitlements, budgets, policy rules, usage records, audit records
+- Agent Orchestrator: agents, runs, run events, tool registry/permissions, memory namespaces, run state
+- Model Policy: entitlements, budgets, policy rules, usage records, audit records
 
 ## 15.3 Quotas and budgets
 Per tenant enforce at minimum:
-- max concurrent runs (Stack A)
-- run creation QPS / rate limit (Stack A)
-- token and/or cost budget per time window (Stack B)
-- allowed model tiers/backends (Stack B)
+- max concurrent runs (Agent Orchestrator)
+- run creation QPS / rate limit (Agent Orchestrator)
+- token and/or cost budget per time window (Model Policy)
+- allowed model tiers/backends (Model Policy)
 
 ## 15.4 Admin controls (minimum capability)
 Tenant management must exist as either:

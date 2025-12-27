@@ -17,8 +17,8 @@ type PeerInfo struct {
 }
 
 type Endpoints struct {
-	StackABaseURL string `json:"stack_a_base_url"`
-	StackBBaseURL string `json:"stack_b_base_url"`
+	AgentOrchestratorBaseURL string `json:"agent-orchestrator_base_url"`
+	ModelPolicyBaseURL       string `json:"model-policy_base_url"`
 }
 
 type Build struct {

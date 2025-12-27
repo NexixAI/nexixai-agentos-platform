@@ -1,11 +1,8 @@
-package stacka
+package modelpolicy
 
 import "net/http"
 
 func ListenAndServe(addr, version string) error {
-	s, err := New(version)
-	if err != nil {
-		return err
-	}
+	s := New(version)
 	return http.ListenAndServe(addr, s.Handler())
 }

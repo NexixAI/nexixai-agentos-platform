@@ -1,8 +1,11 @@
-package stackb
+package agentorchestrator
 
 import "net/http"
 
 func ListenAndServe(addr, version string) error {
-	s := New(version)
+	s, err := New(version)
+	if err != nil {
+		return err
+	}
 	return http.ListenAndServe(addr, s.Handler())
 }

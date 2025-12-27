@@ -10,8 +10,8 @@ code exists to prove contracts and execution paths, not to outrun the design.
 
 ## What This Repo Is
 
-- **Stack A (Agent Core)** — run orchestration, event streaming, lifecycle
-- **Stack B (Model & Policy Runtime)** — model invocation, embeddings, policy
+- **Agent Orchestrator (Agent Core)** — run orchestration, event streaming, lifecycle
+- **Model Policy (Model & Policy Runtime)** — model invocation, embeddings, policy
 - **Federation Layer** — connect AgentOS nodes across environments
 - **Operator UX** — one-command deploy, validate, redeploy, nuke
 - **Spec Authority** — PRS, schemas, OpenAPI, conformance tests
@@ -29,6 +29,23 @@ code exists to prove contracts and execution paths, not to outrun the design.
 
 ---
 
+## Control vs Worker Plane
+
+- Model A baseline: one shared Agent Orchestrator + one shared Model Policy with logical tenancy enforced via `tenant_id`, policy/entitlements, quotas, scoped storage, and audit.
+- Model B (per-tenant pairs) is optional deployment only.
+- Control plane remains compute-light; workers run heavy models and emit events back to Agent Orchestrator. Workers never make orchestration or policy decisions.
+
+```
+Box 1 — Control Plane
+  [Agent Orchestrator] [Model Policy] [Queue/Event Bus]
+  [UI/API Gateway] [Shared artifact store (/shared)]
+  [Optional small local LLM for planning/orchestration]
+
+Box 2/3 — Worker Nodes (GPU)
+  [Worker executors + tools + storage] -> emits events to Agent Orchestrator
+  [GPU-pinned model endpoints: vLLM/TGI/Triton]
+```
+
 ## Repository Layout
 
 /README.md
@@ -43,8 +60,8 @@ plan/v1.02/ (canonical plan docs)
 templates/
 
 /cmd/agentos/
-/stack-a/
-/stack-b/
+/agentorchestrator/
+/modelpolicy/
 /federation/
 /tests/
 /deploy/
@@ -70,10 +87,16 @@ Bring up the platform
 ./agentos status
 
 	Default health endpoints
-		•	Stack A: http://127.0.0.1:50081/v1/health
-		•	Stack B: http://127.0.0.1:50082/v1/health
+		•	Agent Orchestrator: http://127.0.0.1:50081/v1/health
+		•	Model Policy: http://127.0.0.1:50082/v1/health
 		•	Federation: http://127.0.0.1:50083/v1/federation/health
 		•	Windows note: use `curl.exe -4 http://127.0.0.1:PORT/...` (PowerShell `curl` is Invoke-WebRequest). Ports in the 808x range can be reserved/excluded on Windows; local files use 5008x to avoid that.
+
+	Optional workers (GPU-pinned placeholders; control plane stays CPU-bound):
+
+```
+COMPOSE_PROFILES=workers docker compose -f deploy/local/compose.yaml up -d --build
+```
 
 Tear down
 

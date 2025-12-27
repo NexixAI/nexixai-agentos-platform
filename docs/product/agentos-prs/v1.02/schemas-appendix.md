@@ -66,7 +66,7 @@ Recommended `error.code` values (non-exhaustive):
 ## B) Auth Context (Mandatory Internal Contract)
 
 ### B.1 Auth Context Object
-This object is the **required internal contract** carried through Stack A ports and Stack B requests (derived from JWT/OIDC or service token).
+This object is the **required internal contract** carried through Agent Orchestrator ports and Model Policy requests (derived from JWT/OIDC or service token).
 ```json
 {
   "auth": {
@@ -175,7 +175,7 @@ This object is the **required internal contract** carried through Stack A ports 
 ```
 
 ### C.2 Quota Config Schema (Canonical)
-Use this schema for tenant quotas in Stack A and Stack B enforcement. (All fields optional unless otherwise stated by plan tier.)
+Use this schema for tenant quotas in Agent Orchestrator and Model Policy enforcement. (All fields optional unless otherwise stated by plan tier.)
 ```json
 {
   "quota_config": {
@@ -226,7 +226,7 @@ Use this schema for tenant quotas in Stack A and Stack B enforcement. (All field
 
 ---
 
-## D) Stack A Public API Schemas (Run + Event)
+## D) Agent Orchestrator Public API Schemas (Run + Event)
 
 ### D.1 Run Create Request (POST `/v1/agents/{agent_id}/runs`)
 ```json
@@ -516,7 +516,7 @@ All events are tenant-scoped and must include these top-level fields.
         "code": "dependency_unavailable",
         "message": "Model Services Stack unavailable",
         "retryable": true,
-        "details": { "service": "stack-b" }
+        "details": { "service": "model-policy" }
       }
     }
   }
@@ -525,13 +525,13 @@ All events are tenant-scoped and must include these top-level fields.
 
 ---
 
-## E) Stack B (Model Services Stack) Schemas
+## E) Model Policy (Model Services Stack) Schemas
 
-Stack B provides governed, vendor-agnostic model access for Stack A and (optionally) other trusted internal callers.
+Model Policy provides governed, vendor-agnostic model access for Agent Orchestrator and (optionally) other trusted internal callers.
 
 **Contract notes**
-- OpenAI-compat surfaces are allowed, but the **AgentOS canonical envelope** is used for Stack A ↔ Stack B calls.
-- Stack B always returns `correlation_id` and may return `traceparent` for end-to-end tracing.
+- OpenAI-compat surfaces are allowed, but the **AgentOS canonical envelope** is used for Agent Orchestrator ↔ Model Policy calls.
+- Model Policy always returns `correlation_id` and may return `traceparent` for end-to-end tracing.
 
 ### E.1 Model Invoke Request (Chat)
 (OpenAI-compat surface allowed; this is the **AgentOS canonical enrichment**.)
@@ -540,7 +540,7 @@ Stack B provides governed, vendor-agnostic model access for Stack A and (optiona
 {
   "auth": {
     "tenant_id": "tnt_demo",
-    "principal": { "principal_id": "svc_stack_a", "principal_type": "service" },
+    "principal": { "principal_id": "svc_agent-orchestrator", "principal_type": "service" },
     "scopes": ["models:invoke"],
     "policy_context": { "data_classification": "internal", "region": "us-west-2", "purpose": "agent_run" }
   },
@@ -617,7 +617,7 @@ Stack B provides governed, vendor-agnostic model access for Stack A and (optiona
 {
   "auth": {
     "tenant_id": "tnt_demo",
-    "principal": { "principal_id": "svc_stack_a", "principal_type": "service" },
+    "principal": { "principal_id": "svc_agent-orchestrator", "principal_type": "service" },
     "scopes": ["policy:check"],
     "policy_context": { "data_classification": "internal", "region": "us-west-2", "purpose": "agent_run" }
   },
@@ -651,7 +651,7 @@ Stack B provides governed, vendor-agnostic model access for Stack A and (optiona
 {
   "auth": {
     "tenant_id": "tnt_demo",
-    "principal": { "principal_id": "svc_stack_a", "principal_type": "service" },
+    "principal": { "principal_id": "svc_agent-orchestrator", "principal_type": "service" },
     "scopes": ["models:invoke"],
     "policy_context": { "data_classification": "internal", "region": "us-west-2", "purpose": "agent_run" }
   },
@@ -702,7 +702,7 @@ Stack B provides governed, vendor-agnostic model access for Stack A and (optiona
 {
   "auth": {
     "tenant_id": "tnt_demo",
-    "principal": { "principal_id": "svc_stack_a", "principal_type": "service" },
+    "principal": { "principal_id": "svc_agent-orchestrator", "principal_type": "service" },
     "scopes": ["models:list"],
     "policy_context": { "data_classification": "internal", "region": "us-west-2", "purpose": "agent_run" }
   }
@@ -743,8 +743,8 @@ Stack B provides governed, vendor-agnostic model access for Stack A and (optiona
     "region": "us-west-2",
     "api_versions": ["v1"],
     "endpoints": {
-      "stack_a_base_url": "https://node01.dev.nexixai.local",
-      "stack_b_base_url": "https://node01.dev.nexixai.local/bedrock"
+      "agent-orchestrator_base_url": "https://node01.dev.nexixai.local",
+      "model-policy_base_url": "https://node01.dev.nexixai.local/bedrock"
     },
     "build": { "version": "1.0.2", "git_sha": "abc123", "timestamp": "2025-12-19T21:55:00Z" }
   }
@@ -786,7 +786,7 @@ Stack B provides governed, vendor-agnostic model access for Stack A and (optiona
     },
     "auth": {
       "tenant_id": "tnt_demo",
-      "principal": { "principal_id": "svc_stack_a", "principal_type": "service" },
+      "principal": { "principal_id": "svc_agent-orchestrator", "principal_type": "service" },
       "scopes": ["runs:forward"],
       "policy_context": { "data_classification": "internal", "region": "us-west-2", "purpose": "agent_run" }
     },

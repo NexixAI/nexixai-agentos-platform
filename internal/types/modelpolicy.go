@@ -11,7 +11,7 @@ type ModelsListResponse struct {
 	Models []Model `json:"models"`
 }
 
-// The repo's Stack B OpenAPI uses an invoke-style request/response.
+// The repo's Model Policy OpenAPI uses an invoke-style request/response.
 type ModelInvokeRequest struct {
 	Operation string         `json:"operation"`
 	ModelID   string         `json:"model_id"`

@@ -1,4 +1,4 @@
-package stackb
+package modelpolicy
 
 import (
 	"encoding/json"
@@ -45,7 +45,7 @@ func (s *Server) Handler() http.Handler {
 
 	h := middleware.WithAuth(mux)
 	h = middleware.EnsureRequestID(h)
-	h = metrics.Instrument("stack-b", h)
+	h = metrics.Instrument("model-policy", h)
 	return h
 }
 
@@ -54,7 +54,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		httpx.Error(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed", httpx.CorrelationID(r), false)
 		return
 	}
-	httpx.JSON(w, http.StatusOK, types.HealthResponse{Status: "ok", Service: "stack-b", Version: s.version})
+	httpx.JSON(w, http.StatusOK, types.HealthResponse{Status: "ok", Service: "model-policy", Version: s.version})
 }
 
 func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
@@ -78,10 +78,10 @@ func (s *Server) handleInvoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !s.limiter.AllowQPS(tenantID) {
-		metrics.IncQuotaDenied("stack-b", "models_invoke_qps")
+		metrics.IncQuotaDenied("model-policy", "models_invoke_qps")
 		httpx.Error(w, http.StatusTooManyRequests, "quota_exceeded", "invoke QPS exceeded", httpx.CorrelationID(r), true)
 		s.audit.Log(audit.Entry{
-			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "models.invoke", Resource: "stack-b", Outcome: "denied",
+			TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "models.invoke", Resource: "model-policy", Outcome: "denied",
 			CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
 			Meta: map[string]any{"reason": "qps_exceeded"},
 		})

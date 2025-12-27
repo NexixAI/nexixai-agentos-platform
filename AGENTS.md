@@ -25,8 +25,8 @@ Read and follow `SPEC_AUTHORITY.md`. If specs conflict, follow the precedence or
 - No cross-tenant reads/writes/events; federation must preserve and enforce tenant context.
 
 ## Implementation boundaries
-- Stack A owns: Runs, Events, Tools/Memory ports, Scheduling, Federation client/server.
-- Stack B owns: Model providers, Routing, Policy checks, Usage metering, Budgets/Quotas for model calls.
+- Agent Orchestrator owns: Runs, Events, Tools/Memory ports, Scheduling, Federation client/server.
+- Model Policy owns: Model providers, Routing, Policy checks, Usage metering, Budgets/Quotas for model calls.
 
 ## “Minimal diff” checklist for any change
 - Update only the necessary files.

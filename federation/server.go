@@ -187,7 +187,7 @@ func (s *Server) handleForwardRun(w http.ResponseWriter, r *http.Request) {
 
 	bearer := bearerToken(r.Header.Get("Authorization"))
 
-	remoteRunID, remoteEventsURL, status, err := s.forward.ForwardRun(peer.Endpoints.StackABaseURL, agentID, tenantID, principalPayload, bearer, runCreate)
+	remoteRunID, remoteEventsURL, status, err := s.forward.ForwardRun(peer.Endpoints.AgentOrchestratorBaseURL, agentID, tenantID, principalPayload, bearer, runCreate)
 	if err != nil {
 		metrics.IncFederationForwardFailure("federation", "forward_run_failed")
 		httpx.Error(w, http.StatusBadGateway, "forward_failed", err.Error(), httpx.CorrelationID(r), true)

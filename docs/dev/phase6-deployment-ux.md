@@ -35,8 +35,8 @@ Each `up` and `validate` writes a report to:
 
 ## Defaults
 
-- Stack A: http://127.0.0.1:50081
-- Stack B: http://127.0.0.1:50082
+- Agent Orchestrator: http://127.0.0.1:50081
+- Model Policy: http://127.0.0.1:50082
 - Federation: http://127.0.0.1:50083
 
 Compose file: `deploy/local/compose.yaml`

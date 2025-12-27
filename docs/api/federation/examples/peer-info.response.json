@@ -7,8 +7,8 @@
       "v1"
     ],
     "endpoints": {
-      "stack_a_base_url": "https://node01.dev.nexixai.local",
-      "stack_b_base_url": "https://node01.dev.nexixai.local/bedrock"
+      "agent-orchestrator_base_url": "https://node01.dev.nexixai.local",
+      "model-policy_base_url": "https://node01.dev.nexixai.local/bedrock"
     },
     "build": {
       "version": "1.0.2",

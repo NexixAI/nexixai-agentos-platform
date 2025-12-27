@@ -36,8 +36,8 @@ Run:
 docker compose -f deploy/hardening/compose.edge-ratelimit.yaml up -d
 ```
 Access:
-- Stack A via edge: http://localhost:9081
-- Stack B via edge: http://localhost:9082
+- Agent Orchestrator via edge: http://localhost:9081
+- Model Policy via edge: http://localhost:9082
 - Federation via edge: http://localhost:9083
 
 ### 3) mTLS guidance (documented)

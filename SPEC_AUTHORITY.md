@@ -12,8 +12,8 @@ It exists to prevent “interpretation drift” between specs, code, automation,
    Source of truth for **JSON payload shapes**, required fields, event envelopes, auth context, federation payloads.
 
 2. OpenAPI specs (once populated; must match the Schemas Appendix)
-   - `docs/api/stack-a/openapi.yaml`
-   - `docs/api/stack-b/openapi.yaml`
+   - `docs/api/agent-orchestrator/openapi.yaml`
+   - `docs/api/model-policy/openapi.yaml`
    - `docs/api/federation/openapi.yaml`
 
 **Secondary**

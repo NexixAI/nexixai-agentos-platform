@@ -7,8 +7,8 @@
       "v1"
     ],
     "endpoints": {
-      "stack_a_base_url": "http://nodea-stack-a:8081",
-      "stack_b_base_url": "http://nodea-stack-b:8082"
+      "agent-orchestrator_base_url": "http://nodea-agent-orchestrator:8081",
+      "model-policy_base_url": "http://nodea-model-policy:8082"
     },
     "build": {
       "version": "0.0.1-dev",
@@ -25,8 +25,8 @@
         "v1"
       ],
       "endpoints": {
-        "stack_a_base_url": "http://nodeb-stack-a:8084",
-        "stack_b_base_url": "http://nodeb-stack-b:8085"
+        "agent-orchestrator_base_url": "http://nodeb-agent-orchestrator:8084",
+        "model-policy_base_url": "http://nodeb-model-policy:8085"
       },
       "build": {
         "version": "0.0.1-dev",

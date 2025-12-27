@@ -12,7 +12,7 @@ It is subordinate to the PRS and Schemas Appendix per `SPEC_AUTHORITY.md`.
 ## 1. Scope and goals
 
 ### 1.1 In scope (v1.02)
-- Two-stack per node: **Stack A (Orchestration)** and **Stack B (Model Services)**
+- Two-stack per node: **Agent Orchestrator (Orchestration)** and **Model Policy (Model Services)**
 - **Multi-tenancy** with tenant-scoped isolation, quotas/budgets, and tenant-safe observability
 - **Federation** across nodes/environments: peer info/capabilities, run forwarding, event streaming
 - Operator-grade deployment UX: `up`, `redeploy`, `validate`, `status`, `nuke`, reports, real-time progress
@@ -27,14 +27,14 @@ It is subordinate to the PRS and Schemas Appendix per `SPEC_AUTHORITY.md`.
 
 ## 2. System overview
 
-Each **AgentOS Node** is a deployable unit containing Stack A and Stack B (and supporting infra).
+Each **AgentOS Node** is a deployable unit containing Agent Orchestrator and Model Policy (and supporting infra).
 Nodes can federate with other nodes.
 
 ```mermaid
 flowchart LR
   subgraph Node["AgentOS Node (one environment)"]
-    A["Stack A: Orchestration"]
-    B["Stack B: Model Services"]
+    A["Agent Orchestrator: Orchestration"]
+    B["Model Policy: Model Services"]
     O["Observability (metrics/logs/traces/alerts)"]
     S["State (DB/Cache/Memory store)"]
     A <--> B
@@ -48,9 +48,9 @@ flowchart LR
 ```
 
 ### 2.1 External surfaces
-- **Product-facing API** (Stack A): Runs + Events streaming
-- **Model API** (Stack B): model invoke + policy + models list
-- **Federation API** (Stack A): peer info/capabilities + forward run + stream events
+- **Product-facing API** (Agent Orchestrator): Runs + Events streaming
+- **Model API** (Model Policy): model invoke + policy + models list
+- **Federation API** (Agent Orchestrator): peer info/capabilities + forward run + stream events
 
 ---
 
@@ -59,21 +59,21 @@ flowchart LR
 **Non-negotiable:** internal modules call each other only through **ports** (interfaces).
 Adapters implement ports and are swappable with conformance tests.
 
-### 3.1 Stack A (Orchestration Stack) modules
+### 3.1 Agent Orchestrator (Orchestration Stack) modules
 - `api`: HTTP handlers, auth parsing, request validation
 - `runtime`: run scheduler/executor, step engine, timeouts/retries
 - `events`: event emission + SSE fan-out
 - `ports`:
-  - `ModelPort` (to Stack B)
+  - `ModelPort` (to Model Policy)
   - `ToolPort` (invoke tools)
   - `MemoryPort` (KV + search)
   - `RunStatePort` (persist run graph/state)
   - `QueuePort` (enqueue/dequeue/concurrency limits)
   - `EventSinkPort` (optional durable event sink)
 - `federation`: peer client/server, forwarder, capabilities negotiation
-- `tenancy`: tenant context + quota enforcement (Stack A)
+- `tenancy`: tenant context + quota enforcement (Agent Orchestrator)
 
-### 3.2 Stack B (Model Services Stack) modules
+### 3.2 Model Policy (Model Services Stack) modules
 - `api`: HTTP handlers (OpenAI-compat style)
 - `router`: resolve `model_ref` to provider backend + fallback chain
 - `policy`: allow/deny/redact checks
@@ -125,7 +125,7 @@ Logical isolation (tenant partitions in shared backing stores), upgradeable late
 - **Run creation:** enforce per-tenant QPS, burst, concurrency caps
 - **Tool invocation:** enforce per-tenant tool allowlist and tool call rate limits
 - **Memory access:** namespace all reads/writes by tenant
-- **Model invocation (Stack B):** enforce entitlements + budget + max tokens
+- **Model invocation (Model Policy):** enforce entitlements + budget + max tokens
 
 ### 5.3 Quotas and budgets
 Implement in two layers:
@@ -134,19 +134,19 @@ Implement in two layers:
 
 ---
 
-## 6. Stack A ⇄ Stack B interaction
+## 6. Agent Orchestrator ⇄ Model Policy interaction
 
 ### 6.1 Model calls
-Stack A calls Stack B through `ModelPort` with:
+Agent Orchestrator calls Model Policy through `ModelPort` with:
 - `auth` context
 - `request_id` for dedupe/audit
 - `model_ref` and requirements
 - input messages/tools
-Stack B returns:
+Model Policy returns:
 - output + usage + route + policy outcome + correlation_id
 
 ### 6.2 Policy checks
-Stack B may expose `policy/check`. Stack A may call it explicitly, but Stack B must also enforce policy during model calls.
+Model Policy may expose `policy/check`. Agent Orchestrator may call it explicitly, but Model Policy must also enforce policy during model calls.
 
 ---
 
@@ -233,8 +233,8 @@ SMTP email alerting is required OOTB, and `agentos validate` must include a “t
 ## 10. Failure modes and resilience
 
 ### 10.1 Dependency failures
-- If Stack B is unavailable:
-  - Stack A run should fail with `dependency_unavailable` unless configured for retry/backoff.
+- If Model Policy is unavailable:
+  - Agent Orchestrator run should fail with `dependency_unavailable` unless configured for retry/backoff.
 - Tool timeouts:
   - emit tool requested + completed with error
   - proceed according to agent policy (retry/abort)
@@ -255,4 +255,4 @@ SMTP email alerting is required OOTB, and `agentos validate` must include a “t
 2) Populate examples from Schemas Appendix
 3) Add conformance tests (examples validate, additive-only guards)
 4) Scaffold Go services + CLI
-5) Implement Stack A run/event loop + Stack B routing/policy + federation forward/events
+5) Implement Agent Orchestrator run/event loop + Model Policy routing/policy + federation forward/events
