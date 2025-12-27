@@ -10,6 +10,12 @@ This folder contains the authoritative product requirements and implementation c
 - **Schemas Appendix (Implementation Contracts)**  
   - `docs/product/agentos-prs/v1.02/schemas-appendix.md`
 
+- **Plans (canonical)**  
+  - `docs/plan/v1.02/INDEX.md` (phases and tracks under `docs/plan/v1.02/`)
+
+- **Design (canonical)**  
+  - `docs/design/v1.02/agentos-design.md`
+
 ## Naming (v1.02)
 
 AgentOS control plane is composed of two services per environment:
