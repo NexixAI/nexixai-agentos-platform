@@ -4,9 +4,9 @@ services:
       context: ../..
       dockerfile: tests/federation_e2e/Dockerfile.e2e
     depends_on:
-      - nodea-stack-a
-      - nodea-stack-b
+      - nodea-agent-orchestrator
+      - nodea-model-policy
       - nodea-federation
-      - nodeb-stack-a
-      - nodeb-stack-b
+      - nodeb-agent-orchestrator
+      - nodeb-model-policy
       - nodeb-federation

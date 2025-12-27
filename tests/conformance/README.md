@@ -14,10 +14,10 @@ python tests/conformance/run_conformance.py
 ## What it checks
 
 - Parses OpenAPI specs:
-  - docs/api/stack-a/openapi.yaml
-  - docs/api/stack-b/openapi.yaml
+  - docs/api/agent-orchestrator/openapi.yaml
+  - docs/api/model-policy/openapi.yaml
   - docs/api/federation/openapi.yaml
 - Validates canonical example JSON payloads under docs/api/**/examples/ against component schemas.
-- Resolves both internal and external `$ref` pointers (including federation refs back to stack-a schemas).
+- Resolves both internal and external `$ref` pointers (including federation refs back to agent-orchestrator schemas).
 
 If any example no longer matches the contract, the run exits non-zero (CI will fail).

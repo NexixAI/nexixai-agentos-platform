@@ -10,7 +10,7 @@ This doc addresses the gap between "prove it works" federation (Phase 8) and pro
 - This prevents losing proxy targets on restart.
 
 ### Retry + backpressure (baseline)
-- Forwarding (remote Stack A run-create) retries transient failures:
+- Forwarding (remote Agent Orchestrator run-create) retries transient failures:
   - network errors
   - 5xx responses
 - Configure via:
@@ -43,7 +43,7 @@ To claim exactly-once end-to-end you need:
 ### Reconnect semantics for SSE
 For clean reconnects, production should support:
 - client-provided cursor (e.g., `from_sequence` or opaque cursor token)
-- remote Stack A support for replay/cursoring, or local buffering with retention
+- remote Agent Orchestrator support for replay/cursoring, or local buffering with retention
 
 ### Policy + trust boundary
 Production federation should include:

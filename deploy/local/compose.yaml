@@ -1,31 +1,31 @@
 name: agentos-local
 
 services:
-  stack-a:
+  agent-orchestrator:
     build:
       context: ../..
-    command: ["serve","--addr",":8081","stack-a"]
+    command: ["serve","--addr",":8081","agent-orchestrator"]
     ports:
       - "50081:8081"
     environment:
-      - AGENTOS_SERVICE=stack-a
+      - AGENTOS_SERVICE=agent-orchestrator
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_RUN_CREATE_QPS=10
       - AGENTOS_QUOTA_CONCURRENT_RUNS=25
-      - AGENTOS_RUN_STORE_FILE=/workspace/data/stack-a/runs.json
-      - AGENTOS_AUDIT_SINK=file:/workspace/data/stack-a/audit.log
+      - AGENTOS_RUN_STORE_FILE=/workspace/data/agent-orchestrator/runs.json
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/agent-orchestrator/audit.log
 
-  stack-b:
+  model-policy:
     build:
       context: ../..
-    command: ["serve","--addr",":8082","stack-b"]
+    command: ["serve","--addr",":8082","model-policy"]
     ports:
       - "50082:8082"
     environment:
-      - AGENTOS_SERVICE=stack-b
+      - AGENTOS_SERVICE=model-policy
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_QUOTA_INVOKE_QPS=20
-      - AGENTOS_AUDIT_SINK=file:/workspace/data/stack-b/audit.log
+      - AGENTOS_AUDIT_SINK=file:/workspace/data/model-policy/audit.log
 
   federation:
     build:
@@ -38,3 +38,37 @@ services:
       - AGENTOS_DEFAULT_TENANT=tnt_demo
       - AGENTOS_FED_FORWARD_INDEX_FILE=/workspace/data/federation/forward-index.json
       - AGENTOS_AUDIT_SINK=file:/workspace/data/federation/audit.log
+
+  worker-node-a:
+    image: busybox:1.36
+    command: ["sleep","infinity"]
+    profiles: ["workers"]
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - WORKER_ROLE=executor
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
+    volumes:
+      - worker-a-artifacts:/workspace/artifacts
+
+  worker-node-b:
+    image: busybox:1.36
+    command: ["sleep","infinity"]
+    profiles: ["workers"]
+    environment:
+      - CUDA_VISIBLE_DEVICES=1
+      - WORKER_ROLE=executor
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: ["gpu"]
+    volumes:
+      - worker-b-artifacts:/workspace/artifacts
+
+volumes:
+  worker-a-artifacts: {}
+  worker-b-artifacts: {}

@@ -2,12 +2,12 @@
 
 After `agentos up`, use:
 
-- Stack A: http://127.0.0.1:50081
+- Agent Orchestrator: http://127.0.0.1:50081
   - Health: `/v1/health`
   - Create run: `POST /v1/agents/{agent_id}/runs`
   - Events: `GET /v1/runs/{run_id}/events`
 
-- Stack B: http://127.0.0.1:50082
+- Model Policy: http://127.0.0.1:50082
   - Health: `/v1/health`
   - Models: `/v1/models`
   - Invoke: `POST /v1/models:invoke`

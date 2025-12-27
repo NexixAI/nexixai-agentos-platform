@@ -1,6 +1,6 @@
 #!/usr/bin/env pwsh
 # Local smoke test for AgentOS stack running on localhost.
-# Verifies health for stack-a/stack-b/federation and federation peer endpoints.
+# Verifies health for agent-orchestrator/model-policy/federation and federation peer endpoints.
 
 [CmdletBinding()]
 param()
@@ -107,8 +107,8 @@ function Invoke-SmokeCheck {
 }
 
 $targets = @(
-    @{ Name = "stack-a"; Url = "http://127.0.0.1:50081/v1/health"; ExpectJson = $true; ExpectFields = @{ service = "stack-a"; status = "ok" } },
-    @{ Name = "stack-b"; Url = "http://127.0.0.1:50082/v1/health"; ExpectJson = $true; ExpectFields = @{ service = "stack-b"; status = "ok" } },
+    @{ Name = "agent-orchestrator"; Url = "http://127.0.0.1:50081/v1/health"; ExpectJson = $true; ExpectFields = @{ service = "agent-orchestrator"; status = "ok" } },
+    @{ Name = "model-policy"; Url = "http://127.0.0.1:50082/v1/health"; ExpectJson = $true; ExpectFields = @{ service = "model-policy"; status = "ok" } },
     @{ Name = "federation-health"; Url = "http://127.0.0.1:50083/v1/federation/health"; ExpectJson = $true; ExpectFields = @{ service = "federation"; status = "ok" } },
     @{ Name = "federation-peer-info"; Url = "http://127.0.0.1:50083/v1/federation/peer"; ExpectJson = $true; ExpectFields = @{}; AllowedStatusCodes = @(200,503) },
     @{ Name = "federation-peer-capabilities"; Url = "http://127.0.0.1:50083/v1/federation/peer/capabilities"; ExpectJson = $true; ExpectFields = @{}; AllowedStatusCodes = @(200,503) }

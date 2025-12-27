@@ -32,8 +32,8 @@ Docs link guard: macOS/Linux `./scripts/docs/check-canonical-links.sh`; Windows 
 |------:|------|--------|
 | 0 | Repo + Spec Authority Baseline | ✅ Complete |
 | 1 | Stack Skeletons | ✅ Complete |
-| 2 | Stack A Core APIs | ✅ Complete |
-| 3 | Stack B Core APIs | ✅ Complete |
+| 2 | Agent Orchestrator Core APIs | ✅ Complete |
+| 3 | Model Policy Core APIs | ✅ Complete |
 | 4 | Event Model + SSE | ✅ Complete |
 | 5 | Federation Baseline | ✅ Complete |
 | 6 | CLI + Deploy UX | ✅ Complete |
@@ -70,7 +70,7 @@ Establish documentation-led development, authority rules, and repo layout.
 
 ### Phase 1 — Stack Skeletons
 **Purpose**  
-Create Stack A, Stack B, Federation skeletons with health endpoints.
+Create Agent Orchestrator, Model Policy, Federation skeletons with health endpoints.
 
 **References**
 - PRS: §3 System Architecture
@@ -81,26 +81,26 @@ Create Stack A, Stack B, Federation skeletons with health endpoints.
 
 ---
 
-### Phase 2 — Stack A Core APIs
+### Phase 2 — Agent Orchestrator Core APIs
 **Purpose**  
 Implement agent/run lifecycle and public orchestration endpoints.
 
 **References**
 - PRS: §4 External Product-Facing API
-- Design: §3 Stack A Responsibilities
+- Design: §3 Agent Orchestrator Responsibilities
 
 **Status**  
 ✅ Complete
 
 ---
 
-### Phase 3 — Stack B Core APIs
+### Phase 3 — Model Policy Core APIs
 **Purpose**  
 Provide governed model access with stable interfaces.
 
 **References**
-- PRS: §6 Stack B API + Governance
-- Design: §4 Stack B Architecture
+- PRS: §6 Model Policy API + Governance
+- Design: §4 Model Policy Architecture
 
 **Status**  
 ✅ Complete

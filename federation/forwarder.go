@@ -38,8 +38,8 @@ func NewForwarder() *Forwarder {
 	}
 }
 
-// ForwardRun calls the remote Stack A Run Create endpoint and returns (remote_run_id, remote_events_url, status).
-func (f *Forwarder) ForwardRun(remoteStackABaseURL string, agentID string, tenantID string, principalID string, bearerToken string, runCreateReq map[string]any) (string, string, string, error) {
+// ForwardRun calls the remote Agent Orchestrator Run Create endpoint and returns (remote_run_id, remote_events_url, status).
+func (f *Forwarder) ForwardRun(remoteAgentOrchestratorBaseURL string, agentID string, tenantID string, principalID string, bearerToken string, runCreateReq map[string]any) (string, string, string, error) {
 	maxAttempts := f.MaxAttempts
 	if maxAttempts <= 0 {
 		maxAttempts = 1
@@ -49,7 +49,7 @@ func (f *Forwarder) ForwardRun(remoteStackABaseURL string, agentID string, tenan
 		backoff = 250 * time.Millisecond
 	}
 
-	url := strings.TrimRight(remoteStackABaseURL, "/") + "/v1/agents/" + agentID + "/runs"
+	url := strings.TrimRight(remoteAgentOrchestratorBaseURL, "/") + "/v1/agents/" + agentID + "/runs"
 
 	body, _ := json.Marshal(runCreateReq)
 
@@ -89,11 +89,11 @@ func (f *Forwarder) ForwardRun(remoteStackABaseURL string, agentID string, tenan
 				// events_url is expected to be relative; normalize to absolute.
 				absEvents := eventsURL
 				if strings.HasPrefix(eventsURL, "/") {
-					absEvents = strings.TrimRight(remoteStackABaseURL, "/") + eventsURL
+					absEvents = strings.TrimRight(remoteAgentOrchestratorBaseURL, "/") + eventsURL
 				} else if strings.HasPrefix(eventsURL, "http://") || strings.HasPrefix(eventsURL, "https://") {
 					absEvents = eventsURL
 				} else {
-					absEvents = strings.TrimRight(remoteStackABaseURL, "/") + "/" + eventsURL
+					absEvents = strings.TrimRight(remoteAgentOrchestratorBaseURL, "/") + "/" + eventsURL
 				}
 
 				if status == "" {
@@ -103,7 +103,7 @@ func (f *Forwarder) ForwardRun(remoteStackABaseURL string, agentID string, tenan
 				return runID, absEvents, status, nil
 			}
 
-			lastErr = fmt.Errorf("remote stack-a returned %s", resp.Status)
+			lastErr = fmt.Errorf("remote agent-orchestrator returned %s", resp.Status)
 			_ = resp.Body.Close()
 
 			// Do not retry non-retryable client errors.

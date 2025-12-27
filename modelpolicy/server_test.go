@@ -1,4 +1,4 @@
-package stackb
+package modelpolicy
 
 import (
 	"bytes"

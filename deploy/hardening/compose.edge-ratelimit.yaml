@@ -4,28 +4,28 @@ name: agentos-edge
 # This is intentionally minimal and opt-in: it does not replace your future gateway story.
 #
 # Exposes:
-#   - stack-a edge:     http://localhost:9081  -> http://localhost:50081
-#   - stack-b edge:     http://localhost:9082  -> http://localhost:50082
+#   - agent-orchestrator edge:     http://localhost:9081  -> http://localhost:50081
+#   - model-policy edge:     http://localhost:9082  -> http://localhost:50082
 #   - federation edge:  http://localhost:9083  -> http://localhost:50083
 
 services:
-  edge-stack-a:
+  edge-agent-orchestrator:
     image: nginx:1.27-alpine
     ports:
       - "9081:80"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./nginx/stack-a.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/agent-orchestrator.conf:/etc/nginx/conf.d/default.conf:ro
 
-  edge-stack-b:
+  edge-model-policy:
     image: nginx:1.27-alpine
     ports:
       - "9082:80"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./nginx/stack-b.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/model-policy.conf:/etc/nginx/conf.d/default.conf:ro
 
   edge-federation:
     image: nginx:1.27-alpine

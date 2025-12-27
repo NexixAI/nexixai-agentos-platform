@@ -1,4 +1,4 @@
-# Phase 12 — Stack B Providers & Policy
+# Phase 12 — Model Policy Providers & Policy
 
 Goal: Real provider routing + policy gates.
 

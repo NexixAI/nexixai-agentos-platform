@@ -13,11 +13,11 @@ import (
 	"runtime"
 	"strings"
 
+	agentorchestrator "github.com/eyoshidagorgonia/nexixai-agentos-platform/agentorchestrator"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/federation"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/config"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/deploy"
-	stacka "github.com/eyoshidagorgonia/nexixai-agentos-platform/stack-a"
-	stackb "github.com/eyoshidagorgonia/nexixai-agentos-platform/stack-b"
+	modelpolicy "github.com/eyoshidagorgonia/nexixai-agentos-platform/modelpolicy"
 )
 
 const version = "0.0.1-dev"
@@ -54,20 +54,20 @@ func main() {
 func usage() {
 	fmt.Print(`agentos (Phase 7 multi-tenancy scaffold)
 Usage:
-  agentos serve <stack-a|stack-b|federation> [--addr :PORT]
+  agentos serve <agent-orchestrator|model-policy|federation> [--addr :PORT]
   agentos up [--compose-file PATH] [--project NAME] [--tenant TENANT] [--principal PRINCIPAL]
   agentos redeploy [--compose-file PATH] [--project NAME]
-  agentos validate [--stack-a URL] [--stack-b URL] [--federation URL] [--tenant TENANT] [--principal PRINCIPAL]
+  agentos validate [--agent-orchestrator URL] [--model-policy URL] [--federation URL] [--tenant TENANT] [--principal PRINCIPAL]
   agentos status [--compose-file PATH] [--project NAME]
   agentos nuke [--compose-file PATH] [--project NAME] [--hard]
-  agentos tenants list [--stack-a URL]
-  agentos tenants create --id TENANT_ID [--name NAME] [--plan PLAN] [--stack-a URL]
+  agentos tenants list [--agent-orchestrator URL]
+  agentos tenants create --id TENANT_ID [--name NAME] [--plan PLAN] [--agent-orchestrator URL]
 
 Defaults:
   compose file: deploy/local/compose.yaml
   endpoints:
-    stack-a:     http://localhost:8081
-    stack-b:     http://localhost:8082
+    agent-orchestrator:     http://localhost:8081
+    model-policy:     http://localhost:8082
     federation:  http://localhost:8083
 `)
 }
@@ -107,12 +107,12 @@ func serve(args []string) {
 	target := strings.ToLower(rest[0])
 
 	switch target {
-	case "stack-a":
-		log.Printf("serving stack-a on %s", *addr)
-		log.Fatal(stacka.ListenAndServe(*addr, version))
-	case "stack-b":
-		log.Printf("serving stack-b on %s", *addr)
-		log.Fatal(stackb.ListenAndServe(*addr, version))
+	case "agent-orchestrator":
+		log.Printf("serving agent-orchestrator on %s", *addr)
+		log.Fatal(agentorchestrator.ListenAndServe(*addr, version))
+	case "model-policy":
+		log.Printf("serving model-policy on %s", *addr)
+		log.Fatal(modelpolicy.ListenAndServe(*addr, version))
 	case "federation":
 		log.Printf("serving federation on %s", *addr)
 		log.Fatal(federation.ListenAndServe(*addr, version))
@@ -143,12 +143,12 @@ func up(args []string) {
 	}
 
 	v := deploy.Validator{
-		StackA:      "http://localhost:8081",
-		StackB:      "http://localhost:8082",
-		Fed:         "http://localhost:8083",
-		RepoRoot:    repoRoot(),
-		TenantID:    *tenant,
-		PrincipalID: *principal,
+		AgentOrchestrator: "http://localhost:8081",
+		ModelPolicy:       "http://localhost:8082",
+		Fed:               "http://localhost:8083",
+		RepoRoot:          repoRoot(),
+		TenantID:          *tenant,
+		PrincipalID:       *principal,
 	}
 	log.Println("==> up: validating")
 	checks, verr := v.ValidateAll()
@@ -156,9 +156,9 @@ func up(args []string) {
 	sum := deploy.Summary{
 		Mode: "up",
 		Endpoints: map[string]string{
-			"stack-a":    "http://localhost:8081",
-			"stack-b":    "http://localhost:8082",
-			"federation": "http://localhost:8083",
+			"agent-orchestrator": "http://localhost:8081",
+			"model-policy":       "http://localhost:8082",
+			"federation":         "http://localhost:8083",
 		},
 		Checks: checks,
 	}
@@ -189,8 +189,8 @@ func redeploy(args []string) {
 
 func validate(args []string) {
 	fs := flag.NewFlagSet("validate", flag.ExitOnError)
-	stackA := fs.String("stack-a", "http://localhost:8081", "Stack A base URL")
-	stackB := fs.String("stack-b", "http://localhost:8082", "Stack B base URL")
+	agentOrchestrator := fs.String("agent-orchestrator", "http://localhost:8081", "Agent Orchestrator base URL")
+	modelPolicy := fs.String("model-policy", "http://localhost:8082", "Model Policy base URL")
 	fed := fs.String("federation", "http://localhost:8083", "Federation base URL")
 	tenant := fs.String("tenant", "tnt_demo", "tenant id")
 	principal := fs.String("principal", "prn_local", "principal id")
@@ -202,21 +202,21 @@ func validate(args []string) {
 	}
 
 	v := deploy.Validator{
-		StackA:      *stackA,
-		StackB:      *stackB,
-		Fed:         *fed,
-		RepoRoot:    repoRoot(),
-		TenantID:    *tenant,
-		PrincipalID: *principal,
+		AgentOrchestrator: *agentOrchestrator,
+		ModelPolicy:       *modelPolicy,
+		Fed:               *fed,
+		RepoRoot:          repoRoot(),
+		TenantID:          *tenant,
+		PrincipalID:       *principal,
 	}
 	checks, verr := v.ValidateAll()
 
 	sum := deploy.Summary{
 		Mode: "validate",
 		Endpoints: map[string]string{
-			"stack-a":    *stackA,
-			"stack-b":    *stackB,
-			"federation": *fed,
+			"agent-orchestrator": *agentOrchestrator,
+			"model-policy":       *modelPolicy,
+			"federation":         *fed,
 		},
 		Checks: checks,
 	}
@@ -238,9 +238,9 @@ func status(args []string) {
 	r := newRunner(*composeFile, *project)
 	_ = r.Ps()
 	printAccess(map[string]string{
-		"stack-a":    "http://localhost:8081",
-		"stack-b":    "http://localhost:8082",
-		"federation": "http://localhost:8083",
+		"agent-orchestrator": "http://localhost:8081",
+		"model-policy":       "http://localhost:8082",
+		"federation":         "http://localhost:8083",
 	})
 }
 
@@ -277,10 +277,10 @@ func tenantsCmd(args []string) {
 
 func tenantsList(args []string) {
 	fs := flag.NewFlagSet("tenants list", flag.ExitOnError)
-	stackA := fs.String("stack-a", "http://localhost:8081", "Stack A base URL")
+	agentOrchestrator := fs.String("agent-orchestrator", "http://localhost:8081", "Agent Orchestrator base URL")
 	_ = fs.Parse(args)
 
-	url := strings.TrimRight(*stackA, "/") + "/v1/admin/tenants"
+	url := strings.TrimRight(*agentOrchestrator, "/") + "/v1/admin/tenants"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -293,7 +293,7 @@ func tenantsList(args []string) {
 
 func tenantsCreate(args []string) {
 	fs := flag.NewFlagSet("tenants create", flag.ExitOnError)
-	stackA := fs.String("stack-a", "http://localhost:8081", "Stack A base URL")
+	agentOrchestrator := fs.String("agent-orchestrator", "http://localhost:8081", "Agent Orchestrator base URL")
 	id := fs.String("id", "", "tenant id (required)")
 	name := fs.String("name", "", "tenant name")
 	plan := fs.String("plan", "", "plan tier")
@@ -313,7 +313,7 @@ func tenantsCreate(args []string) {
 		payload["plan_tier"] = *plan
 	}
 	b, _ := json.Marshal(payload)
-	url := strings.TrimRight(*stackA, "/") + "/v1/admin/tenants"
+	url := strings.TrimRight(*agentOrchestrator, "/") + "/v1/admin/tenants"
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(b))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -328,11 +328,11 @@ func tenantsCreate(args []string) {
 
 func printAccess(endpoints map[string]string) {
 	log.Println("==> access")
-	if v, ok := endpoints["stack-a"]; ok {
-		log.Printf("Stack A health: %s/v1/health", v)
+	if v, ok := endpoints["agent-orchestrator"]; ok {
+		log.Printf("Agent Orchestrator health: %s/v1/health", v)
 	}
-	if v, ok := endpoints["stack-b"]; ok {
-		log.Printf("Stack B health: %s/v1/health", v)
+	if v, ok := endpoints["model-policy"]; ok {
+		log.Printf("Model Policy health: %s/v1/health", v)
 	}
 	if v, ok := endpoints["federation"]; ok {
 		log.Printf("Federation health: %s/v1/federation/health", v)

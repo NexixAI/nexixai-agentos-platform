@@ -7,7 +7,7 @@ This phase proves the **“connect stacks”** story end-to-end: Node A forwards
 - A 2-node local compose file: `deploy/local/compose.federation-2node.yaml`
 - Peer registry seed file: `deploy/local/peers.seed.json`
 - Federation implementation:
-  - `POST /v1/federation/runs:forward` calls **remote Stack A** `POST /v1/agents/{agent_id}/runs`
+  - `POST /v1/federation/runs:forward` calls **remote Agent Orchestrator** `POST /v1/agents/{agent_id}/runs`
   - `GET /v1/federation/runs/{run_id}/events` acts as an **SSE proxy** to the remote run events stream
   - `POST /v1/federation/events:ingest` stores events and enforces **dedupe by event_id** + monotonic `sequence`
   - `GET /v1/federation/peer` + `/peer/capabilities` implemented per OpenAPI

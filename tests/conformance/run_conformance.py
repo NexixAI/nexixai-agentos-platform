@@ -25,23 +25,23 @@ REPO_ROOT = Path(__file__).resolve().parents[2]  # tests/conformance/ -> repo
 DOCS_API = REPO_ROOT / "docs" / "api"
 
 OPENAPI_FILES = {
-    "stack-a": DOCS_API / "stack-a" / "openapi.yaml",
-    "stack-b": DOCS_API / "stack-b" / "openapi.yaml",
+    "agent-orchestrator": DOCS_API / "agent-orchestrator" / "openapi.yaml",
+    "model-policy": DOCS_API / "model-policy" / "openapi.yaml",
     "federation": DOCS_API / "federation" / "openapi.yaml",
 }
 
 # Map example files to (openapi_key, component_schema_name)
 EXAMPLE_MAP = {
-    # Stack A
-    "docs/api/stack-a/examples/runs-create.request.json": ("stack-a", "RunCreateRequest"),
-    "docs/api/stack-a/examples/runs-create.response.json": ("stack-a", "RunCreateResponse"),
-    "docs/api/stack-a/examples/event-envelope.json": ("stack-a", "EventEnvelope"),
+    # Agent Orchestrator
+    "docs/api/agent-orchestrator/examples/runs-create.request.json": ("agent-orchestrator", "RunCreateRequest"),
+    "docs/api/agent-orchestrator/examples/runs-create.response.json": ("agent-orchestrator", "RunCreateResponse"),
+    "docs/api/agent-orchestrator/examples/event-envelope.json": ("agent-orchestrator", "EventEnvelope"),
 
-    # Stack B
-    "docs/api/stack-b/examples/chat.request.json": ("stack-b", "ModelInvokeRequest"),
-    "docs/api/stack-b/examples/chat.response.json": ("stack-b", "ModelInvokeResponse"),
-    "docs/api/stack-b/examples/policy-check.request.json": ("stack-b", "PolicyCheckRequest"),
-    "docs/api/stack-b/examples/policy-check.response.json": ("stack-b", "PolicyCheckResponse"),
+    # Model Policy
+    "docs/api/model-policy/examples/chat.request.json": ("model-policy", "ModelInvokeRequest"),
+    "docs/api/model-policy/examples/chat.response.json": ("model-policy", "ModelInvokeResponse"),
+    "docs/api/model-policy/examples/policy-check.request.json": ("model-policy", "PolicyCheckRequest"),
+    "docs/api/model-policy/examples/policy-check.response.json": ("model-policy", "PolicyCheckResponse"),
 
     # Federation
     "docs/api/federation/examples/peer-info.response.json": ("federation", "PeerInfoResponse"),
@@ -76,7 +76,7 @@ def _json_pointer_get(doc: Dict[str, Any], pointer: str) -> Any:
 
 def _parse_ref(ref: str, base_file: Path) -> RefTarget:
     # internal: "#/components/schemas/Foo"
-    # external: "../stack-a/openapi.yaml#/components/schemas/Foo"
+    # external: "../agent-orchestrator/openapi.yaml#/components/schemas/Foo"
     if "#" not in ref:
         raise ConformanceError(f"Unsupported $ref without '#': {ref}")
     file_part, frag = ref.split("#", 1)

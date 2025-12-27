@@ -61,4 +61,4 @@ groups:
           severity: warn
         annotations:
           summary: "Federation forward failures detected"
-          description: "Federation forward failures > 0 over 5m. Check peer reachability and Stack A health."
+          description: "Federation forward failures > 0 over 5m. Check peer reachability and Agent Orchestrator health."

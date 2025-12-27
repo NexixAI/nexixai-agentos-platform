@@ -20,7 +20,7 @@ type fileRunStore struct {
 // NewFileRunStore returns a file-backed RunStore persisted as JSON.
 func NewFileRunStore(path string) (RunStore, error) {
 	if path == "" {
-		path = filepath.Join("data", "stack-a", "runs.json")
+		path = filepath.Join("data", "agent-orchestrator", "runs.json")
 	}
 	s := &fileRunStore{
 		path: path,

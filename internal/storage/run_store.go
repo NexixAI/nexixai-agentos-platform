@@ -25,11 +25,11 @@ type RunStore interface {
 }
 
 // NewRunStoreFromEnv constructs the default run store adapter, using AGENTOS_RUN_STORE_FILE
-// or falling back to ./data/stack-a/runs.json.
+// or falling back to ./data/agent-orchestrator/runs.json.
 func NewRunStoreFromEnv() (RunStore, error) {
 	path := strings.TrimSpace(os.Getenv("AGENTOS_RUN_STORE_FILE"))
 	if path == "" {
-		path = filepath.Join("data", "stack-a", "runs.json")
+		path = filepath.Join("data", "agent-orchestrator", "runs.json")
 	}
 	return NewFileRunStore(path)
 }

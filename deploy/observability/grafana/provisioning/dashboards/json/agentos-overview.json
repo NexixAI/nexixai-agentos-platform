@@ -10,23 +10,23 @@
   "panels": [
     {
       "type": "stat",
-      "title": "HTTP Requests (stack-a)",
+      "title": "HTTP Requests (agent-orchestrator)",
       "gridPos": { "h": 6, "w": 8, "x": 0, "y": 0 },
       "targets": [
         {
-          "expr": "sum(increase(agentos_http_requests_total{service=\"stack-a\"}[5m]))",
-          "legendFormat": "stack-a"
+          "expr": "sum(increase(agentos_http_requests_total{service=\"agent-orchestrator\"}[5m]))",
+          "legendFormat": "agent-orchestrator"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "HTTP Requests (stack-b)",
+      "title": "HTTP Requests (model-policy)",
       "gridPos": { "h": 6, "w": 8, "x": 8, "y": 0 },
       "targets": [
         {
-          "expr": "sum(increase(agentos_http_requests_total{service=\"stack-b\"}[5m]))",
-          "legendFormat": "stack-b"
+          "expr": "sum(increase(agentos_http_requests_total{service=\"model-policy\"}[5m]))",
+          "legendFormat": "model-policy"
         }
       ]
     },

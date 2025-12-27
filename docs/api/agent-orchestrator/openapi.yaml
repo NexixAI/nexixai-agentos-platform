@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: NexixAI AgentOS — Stack A (Orchestration) API
+  title: NexixAI AgentOS — Agent Orchestrator (Orchestration) API
   version: 1.0.2
-  description: 'Stack A (Orchestration) is the product-facing control plane for AgentOS:
+  description: 'Agent Orchestrator (Orchestration) is the product-facing control plane for AgentOS:
 
     Runs, run state, and event streaming (SSE).
 
@@ -27,7 +27,7 @@ paths:
       tags:
       - Health
       summary: Health check
-      operationId: stackAHealth
+      operationId: agentOrchestratorHealth
       responses:
         '200':
           description: OK
@@ -291,7 +291,7 @@ components:
         service:
           type: string
           enum:
-          - stack-a
+          - agent-orchestrator
         version:
           type: string
     RunCreateRequest:
