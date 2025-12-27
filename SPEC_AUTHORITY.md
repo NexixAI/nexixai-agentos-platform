@@ -27,7 +27,7 @@ It exists to prevent “interpretation drift” between specs, code, automation,
    - `docs/api/*/examples/*.json`
    - `tests/conformance/*`
 
-Legacy v1.02 paths remain as compatibility stubs; update links to the canonical locations above.
+Legacy v1.02 paths have been removed; use only the canonical locations above.
 
 ---
 

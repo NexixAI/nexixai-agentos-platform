@@ -13,32 +13,10 @@ $legacyPatterns = @(
 )
 
 $ignorePatterns = @(
-  # Legacy plan index stub is expected to mention legacy paths
-  "docs/plan/LEGACY.md",
-  # Legacy compatibility stub for plan index
-  "docs/plan/INDEX.md",
-  # Legacy phase stubs allowed to include old links
-  "docs/plan/phase-*.md",
-  # Legacy track index stub allowed to include old links
-  "docs/plan/tracks/INDEX.md",
-  # Legacy track stubs allowed to include old links
-  "docs/plan/tracks/track-*.md",
-  # Legacy PRS stub location (self-referential)
-  "docs/product/agentos-prs/v1.02-prs.md",
-  # Legacy Schemas Appendix stub location (self-referential)
-  "docs/product/agentos-prs/v1.02-schemas-appendix.md",
-  # Legacy design stub location (self-referential)
-  "docs/design/agentos-v1.02-design.md",
   # Canonical frozen PRS folder may contain references by design
   "docs/product/agentos-prs/v1.02/*.md",
   # Canonical frozen design folder may contain references by design
-  "docs/design/v1.02/*.md",
-  # Process doc compatibility stub for execution plan path
-  "docs/plan/agentos-v1.02-execution-plan.md",
-  # Process doc compatibility stub for progress log path
-  "docs/plan/progress-log.md",
-  # Process doc compatibility stub for PR checklist path
-  "docs/plan/pr-checklist.md"
+  "docs/design/v1.02/*.md"
 )
 
 function ShouldIgnore($path) {

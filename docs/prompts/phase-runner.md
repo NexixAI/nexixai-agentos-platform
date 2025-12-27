@@ -2,7 +2,7 @@
 
 This runner defines the **single, repeatable** procedure Codex must follow to implement AgentOS v1.02 **phases sequentially**.
 
-It does **not** change product requirements. It executes the plan in `docs/plan/${plan_version}/phases/phase-*.md` (legacy stubs exist but canonical is versioned) while obeying `SPEC_AUTHORITY.md`.
+It does **not** change product requirements. It executes the plan in `docs/plan/${plan_version}/phases/phase-*.md` while obeying `SPEC_AUTHORITY.md`.
 
 ---
 
@@ -53,7 +53,7 @@ Expected format:
 3) Let:
    - `PHASE_DOC = docs/plan/${plan_version}/phases/phase-${PHASE_NUM}.md`
 
-4) If `PHASE_DOC` does not exist, temporarily fallback to the legacy stub for that phase. If neither exists: **STOP and report**.
+4) If `PHASE_DOC` does not exist: **STOP and report**.
 
 ---
 
