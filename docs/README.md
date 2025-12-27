@@ -16,6 +16,8 @@ This folder contains the authoritative product requirements and implementation c
 - **Design (canonical)**  
   - `docs/design/v1.02/agentos-design.md`
 
+The AI Job Control Language (JCL) RFC defines the execution discipline used by Codex and other AI implementors in this repository.
+
 ## Naming (v1.02)
 
 AgentOS control plane is composed of two services per environment:
