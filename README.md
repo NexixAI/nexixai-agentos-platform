@@ -10,8 +10,8 @@ code exists to prove contracts and execution paths, not to outrun the design.
 
 ## What This Repo Is
 
-- **Agent Orchestrator (Agent Core)** — run orchestration, event streaming, lifecycle
-- **Model Policy (Model & Policy Runtime)** — model invocation, embeddings, policy
+- **Agent Orchestrator (Orchestration)** — run orchestration, event streaming, lifecycle
+- **Model Policy (Model Services)** — model invocation, embeddings, policy
 - **Federation Layer** — connect AgentOS nodes across environments
 - **Operator UX** — one-command deploy, validate, redeploy, nuke
 - **Spec Authority** — PRS, schemas, OpenAPI, conformance tests
