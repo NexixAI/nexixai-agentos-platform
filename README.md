@@ -119,6 +119,20 @@ go build -o agentos.exe ./cmd/agentos
 
 ### Quick Smoke Test
 
+**Automated (recommended):**
+
+```bash
+# Unix/macOS
+./scripts/smoke-local.sh
+
+# Windows (PowerShell)
+.\scripts\smoke-local.ps1
+```
+
+The smoke scripts include retries with bounded timeouts and force IPv4 for reliability.
+
+**Manual:**
+
 ```bash
 # Create a run (uses default tenant tnt_demo)
 curl -X POST http://127.0.0.1:50081/v1/agents/my-agent/runs \
@@ -213,6 +227,57 @@ Key configuration options:
 | `AGENTOS_QUOTA_CONCURRENT_RUNS` | Max concurrent runs per tenant | `25` |
 | `AGENTOS_QUOTA_INVOKE_QPS` | Model invocation rate limit | `20` |
 | `AGENTOS_AUDIT_SINK` | Audit destination (`stdout`, `stderr`, `file:PATH`) | `file:data/audit/...` |
+
+---
+
+## Troubleshooting
+
+### Docker Credential Helper Issues
+
+If Docker Desktop's credential helper breaks (common on macOS/Windows), you may see errors like:
+
+```
+error getting credentials - err: exec: "docker-credential-desktop": executable file not found
+```
+
+**Quick fix (bypass credential helper for local builds):**
+
+1. Edit `~/.docker/config.json`
+2. Remove or comment out the `credsStore` line:
+   ```json
+   {
+     "credsStore": "desktop"  // <-- remove this line
+   }
+   ```
+3. Retry `docker compose up --build`
+
+**Alternative (reset Docker Desktop):**
+
+1. Docker Desktop → Troubleshoot → Reset to factory defaults
+2. Re-authenticate with `docker login` if needed
+
+### Port Already in Use
+
+If you see "port already in use" errors, another process may be binding to 5008x ports:
+
+```bash
+# Find what's using the port (Unix/macOS)
+lsof -i :50081
+
+# Windows (PowerShell)
+netstat -ano | findstr :50081
+```
+
+Stop the conflicting process or change the compose port mappings.
+
+### Services Not Responding
+
+If health checks fail after `./agentos up`:
+
+1. Check container status: `docker compose -f deploy/local/compose.yaml ps`
+2. Check logs: `docker compose -f deploy/local/compose.yaml logs`
+3. Ensure you're using 127.0.0.1 (not localhost) to avoid IPv6 issues
+4. On Windows, use `curl.exe -4` to force IPv4
 
 ---
 

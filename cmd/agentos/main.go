@@ -66,9 +66,9 @@ Usage:
 Defaults:
   compose file: deploy/local/compose.yaml
   endpoints:
-    agent-orchestrator:     http://localhost:8081
-    model-policy:     http://localhost:8082
-    federation:  http://localhost:8083
+    agent-orchestrator:     http://localhost:50081
+    model-policy:           http://localhost:50082
+    federation:             http://localhost:50083
 `)
 }
 
@@ -143,9 +143,9 @@ func up(args []string) {
 	}
 
 	v := deploy.Validator{
-		AgentOrchestrator: "http://localhost:8081",
-		ModelPolicy:       "http://localhost:8082",
-		Fed:               "http://localhost:8083",
+		AgentOrchestrator: "http://localhost:50081",
+		ModelPolicy:       "http://localhost:50082",
+		Fed:               "http://localhost:50083",
 		RepoRoot:          repoRoot(),
 		TenantID:          *tenant,
 		PrincipalID:       *principal,
@@ -156,9 +156,9 @@ func up(args []string) {
 	sum := deploy.Summary{
 		Mode: "up",
 		Endpoints: map[string]string{
-			"agent-orchestrator": "http://localhost:8081",
-			"model-policy":       "http://localhost:8082",
-			"federation":         "http://localhost:8083",
+			"agent-orchestrator": "http://localhost:50081",
+			"model-policy":       "http://localhost:50082",
+			"federation":         "http://localhost:50083",
 		},
 		Checks: checks,
 	}
@@ -189,9 +189,9 @@ func redeploy(args []string) {
 
 func validate(args []string) {
 	fs := flag.NewFlagSet("validate", flag.ExitOnError)
-	agentOrchestrator := fs.String("agent-orchestrator", "http://localhost:8081", "Agent Orchestrator base URL")
-	modelPolicy := fs.String("model-policy", "http://localhost:8082", "Model Policy base URL")
-	fed := fs.String("federation", "http://localhost:8083", "Federation base URL")
+	agentOrchestrator := fs.String("agent-orchestrator", "http://localhost:50081", "Agent Orchestrator base URL")
+	modelPolicy := fs.String("model-policy", "http://localhost:50082", "Model Policy base URL")
+	fed := fs.String("federation", "http://localhost:50083", "Federation base URL")
 	tenant := fs.String("tenant", "tnt_demo", "tenant id")
 	principal := fs.String("principal", "prn_local", "principal id")
 	_ = fs.Parse(args)
@@ -238,9 +238,9 @@ func status(args []string) {
 	r := newRunner(*composeFile, *project)
 	_ = r.Ps()
 	printAccess(map[string]string{
-		"agent-orchestrator": "http://localhost:8081",
-		"model-policy":       "http://localhost:8082",
-		"federation":         "http://localhost:8083",
+		"agent-orchestrator": "http://localhost:50081",
+		"model-policy":       "http://localhost:50082",
+		"federation":         "http://localhost:50083",
 	})
 }
 
@@ -277,7 +277,7 @@ func tenantsCmd(args []string) {
 
 func tenantsList(args []string) {
 	fs := flag.NewFlagSet("tenants list", flag.ExitOnError)
-	agentOrchestrator := fs.String("agent-orchestrator", "http://localhost:8081", "Agent Orchestrator base URL")
+	agentOrchestrator := fs.String("agent-orchestrator", "http://localhost:50081", "Agent Orchestrator base URL")
 	_ = fs.Parse(args)
 
 	url := strings.TrimRight(*agentOrchestrator, "/") + "/v1/admin/tenants"
@@ -293,7 +293,7 @@ func tenantsList(args []string) {
 
 func tenantsCreate(args []string) {
 	fs := flag.NewFlagSet("tenants create", flag.ExitOnError)
-	agentOrchestrator := fs.String("agent-orchestrator", "http://localhost:8081", "Agent Orchestrator base URL")
+	agentOrchestrator := fs.String("agent-orchestrator", "http://localhost:50081", "Agent Orchestrator base URL")
 	id := fs.String("id", "", "tenant id (required)")
 	name := fs.String("name", "", "tenant name")
 	plan := fs.String("plan", "", "plan tier")
