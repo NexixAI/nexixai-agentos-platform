@@ -7,6 +7,8 @@ services:
     command: ["serve","--addr",":8081","agent-orchestrator"]
     ports:
       - "50081:8081"
+    env_file:
+      - ./secrets.example.env
     environment:
       - AGENTOS_SERVICE=agent-orchestrator
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -21,6 +23,8 @@ services:
     command: ["serve","--addr",":8082","model-policy"]
     ports:
       - "50082:8082"
+    env_file:
+      - ./secrets.example.env
     environment:
       - AGENTOS_SERVICE=model-policy
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -33,6 +37,8 @@ services:
     command: ["serve","--addr",":8083","federation"]
     ports:
       - "50083:8083"
+    env_file:
+      - ./secrets.example.env
     environment:
       - AGENTOS_SERVICE=federation
       - AGENTOS_DEFAULT_TENANT=tnt_demo
