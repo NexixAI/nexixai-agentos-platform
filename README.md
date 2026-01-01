@@ -53,7 +53,7 @@ Box 2/3 — Worker Nodes (GPU)
 ```
 /README.md
 /SPEC_AUTHORITY.md
-/CODEX_CONTRACT.md
+/AI_CONTRACT.md
 /AGENTS.md
 
 /docs/
