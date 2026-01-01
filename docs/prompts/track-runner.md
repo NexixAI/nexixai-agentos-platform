@@ -1,4 +1,4 @@
-# Codex Track Runner Prompt (post-v1.02)
+# Track Runner — AI Automation (post-v1.02)
 
 Tracks are **post-v1.02 work items**. They are executed as PRs, but they are **not** PRS phases.
 
@@ -6,7 +6,7 @@ This runner uses **one knob**: `configs/NEXT_TRACK.json` (including `plan_versio
 
 ---
 
-## Prompt (paste into Codex)
+## Prompt (paste into AI tool)
 
 You are working in repo `nexixai-agentos-platform`.
 

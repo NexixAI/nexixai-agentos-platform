@@ -1,4 +1,4 @@
-# AGENTS — Implementation Rules (Codex / Automation)
+# AGENTS — Implementation Rules (AI Automation)
 
 This repo is **spec-first**. The goal is to implement AgentOS without interpretation drift.
 

@@ -1,6 +1,6 @@
-# Phase Runner — Codex Automation (v1.02)
+# Phase Runner — AI Automation (v1.02)
 
-This runner defines the **single, repeatable** procedure Codex must follow to implement AgentOS v1.02 **phases sequentially**.
+This runner defines the **single, repeatable** procedure the AI must follow to implement AgentOS v1.02 **phases sequentially**.
 
 It does **not** change product requirements. It executes the plan in `docs/plan/${plan_version}/phases/phase-*.md` while obeying `SPEC_AUTHORITY.md`.
 
@@ -8,7 +8,7 @@ It does **not** change product requirements. It executes the plan in `docs/plan/
 
 ## Inputs (single source of truth)
 
-Codex must read the next phase number and plan version from `configs/NEXT_PHASE.json`. If it does not exist: **STOP and report**.
+The AI must read the next phase number and plan version from `configs/NEXT_PHASE.json`. If it does not exist: **STOP and report**.
 
 Expected format:
 
@@ -131,7 +131,7 @@ Then **STOP**.
 
 ## Notes on SPEC_AUTHORITY
 
-Codex must treat `SPEC_AUTHORITY.md` as the conflict resolver.
+The AI must treat `SPEC_AUTHORITY.md` as the conflict resolver.
 If code/spec mismatch is discovered:
 - Do not invent fields/semantics in code.
 - Stop and report if the fix would require modifying normative docs (`docs/product/agentos-prs/` or `docs/api/`).
