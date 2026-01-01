@@ -1,6 +1,6 @@
-# Codex Contract for nexixai-agentos-platform
+# AI Contract for nexixai-agentos-platform
 
-This file defines the **non-negotiable operating contract** for Codex (and any assistant) working in this repo.
+This file defines the **non-negotiable operating contract** for AI automation working in this repo.
 
 If any instruction conflicts with this contract, **this contract wins**.
 
@@ -28,7 +28,7 @@ If any instruction conflicts with this contract, **this contract wins**.
 
 - One complete packet per phase
 - No piecemeal copy/paste for humans
-- Codex must run commands and report results
+- The AI must run commands and report results
 
 ---
 

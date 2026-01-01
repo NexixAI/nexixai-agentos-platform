@@ -37,7 +37,7 @@ Before using this system, familiarize yourself with these documents:
 | Document | Purpose | Location |
 |----------|---------|----------|
 | **SPEC_AUTHORITY.md** | Conflict resolution rules and locked zones | [/SPEC_AUTHORITY.md](/SPEC_AUTHORITY.md) |
-| **CODEX_CONTRACT.md** | Binding operating contract for AI | [/CODEX_CONTRACT.md](/CODEX_CONTRACT.md) |
+| **AI_CONTRACT.md** | Binding operating contract for AI | [/AI_CONTRACT.md](/AI_CONTRACT.md) |
 | **AGENTS.md** | Automation behavior constraints | [/AGENTS.md](/AGENTS.md) |
 | **AI Implementor Standard** | Change classification rules | [NexixAI-AI-Implementor-Standard-v1.md](NexixAI-AI-Implementor-Standard-v1.md) |
 | **RFC-0001 AI JCL** | Philosophy and templates | [../rfc/RFC-0001-ai-jcl-2025.md](../rfc/RFC-0001-ai-jcl-2025.md) |
@@ -46,7 +46,7 @@ Before using this system, familiarize yourself with these documents:
 
 If documents conflict, follow this order:
 1. SPEC_AUTHORITY.md
-2. CODEX_CONTRACT.md
+2. AI_CONTRACT.md
 3. Normative specs (PRS, Schemas, OpenAPI)
 4. Everything else
 
@@ -63,7 +63,7 @@ The `docs/prompts/` folder contains the exact prompts used to run AI work in thi
 
 ### Notes
 - The repo's conflict rules live in `/SPEC_AUTHORITY.md`
-- The repo-wide behavior constraints for automation live in `/CODEX_CONTRACT.md` (kept at repo root on purpose)
+- The repo-wide behavior constraints for automation live in `/AI_CONTRACT.md` (kept at repo root on purpose)
 
 ---
 
@@ -307,7 +307,7 @@ docker compose -f deploy/local/compose.federation-2node.yaml \
 | Document | Path |
 |----------|------|
 | SPEC_AUTHORITY | [/SPEC_AUTHORITY.md](/SPEC_AUTHORITY.md) |
-| CODEX_CONTRACT | [/CODEX_CONTRACT.md](/CODEX_CONTRACT.md) |
+| AI_CONTRACT | [/AI_CONTRACT.md](/AI_CONTRACT.md) |
 | AGENTS | [/AGENTS.md](/AGENTS.md) |
 | RFC-0001 AI JCL | [docs/rfc/RFC-0001-ai-jcl-2025.md](../rfc/RFC-0001-ai-jcl-2025.md) |
 | Phase Runner | [docs/prompts/phase-runner.md](../prompts/phase-runner.md) |
