@@ -106,6 +106,10 @@ func serve(args []string) {
 	}
 	target := strings.ToLower(rest[0])
 
+	if err := config.ValidateServiceConfig(target); err != nil {
+		log.Fatalf("invalid configuration: %v", err)
+	}
+
 	switch target {
 	case "agent-orchestrator":
 		log.Printf("serving agent-orchestrator on %s", *addr)
