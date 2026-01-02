@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentos-model-policy
+  labels:
+    app: agentos-model-policy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentos-model-policy
+  template:
+    metadata:
+      labels:
+        app: agentos-model-policy
+    spec:
+      containers:
+        - name: agentos
+          image: ghcr.io/nexixai/agentos:latest
+          args: ["serve", "--addr", ":8082", "model-policy"]
+          ports:
+            - containerPort: 8082
+          env:
+            - name: AGENTOS_SERVICE
+              value: model-policy
+            - name: AGENTOS_PROFILE
+              value: prod
+            - name: AGENTOS_METRICS_REQUIRE_AUTH
+              value: "1"
+            - name: AGENTOS_AUDIT_SINK
+              value: file:/var/agentos/model-policy/audit.log
+            - name: AGENTOS_QUOTA_INVOKE_QPS
+              value: "20"
+          envFrom:
+            - secretRef:
+                name: agentos-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /var/agentos
+      volumes:
+        - name: data
+          emptyDir: {}

@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentos-federation
+  labels:
+    app: agentos-federation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentos-federation
+  template:
+    metadata:
+      labels:
+        app: agentos-federation
+    spec:
+      containers:
+        - name: agentos
+          image: ghcr.io/nexixai/agentos:latest
+          args: ["serve", "--addr", ":8083", "federation"]
+          ports:
+            - containerPort: 8083
+          env:
+            - name: AGENTOS_SERVICE
+              value: federation
+            - name: AGENTOS_PROFILE
+              value: prod
+            - name: AGENTOS_METRICS_REQUIRE_AUTH
+              value: "1"
+            - name: AGENTOS_AUDIT_SINK
+              value: file:/var/agentos/federation/audit.log
+            - name: AGENTOS_FED_FORWARD_INDEX_FILE
+              value: /var/agentos/federation/forward-index.json
+            - name: AGENTOS_PEERS_FILE
+              value: /etc/agentos/peers/peers.seed.json
+            - name: AGENTOS_STACK_ID
+              value: stk_local
+            - name: AGENTOS_ENVIRONMENT
+              value: k8s
+            - name: AGENTOS_REGION
+              value: local
+          envFrom:
+            - secretRef:
+                name: agentos-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /var/agentos
+            - name: peers
+              mountPath: /etc/agentos/peers
+              readOnly: true
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: peers
+          configMap:
+            name: agentos-peers

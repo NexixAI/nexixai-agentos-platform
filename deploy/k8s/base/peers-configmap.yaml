@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agentos-peers
+data:
+  peers.seed.json: |
+    {
+      "local": {
+        "stack_id": "stk_local",
+        "environment": "k8s",
+        "region": "local",
+        "api_versions": ["v1"],
+        "endpoints": {
+          "agent-orchestrator_base_url": "http://agentos-agent-orchestrator:8081",
+          "model-policy_base_url": "http://agentos-model-policy:8082"
+        },
+        "build": {
+          "version": "1.0.2",
+          "git_sha": "unknown",
+          "timestamp": "1970-01-01T00:00:00Z"
+        }
+      },
+      "peers": []
+    }

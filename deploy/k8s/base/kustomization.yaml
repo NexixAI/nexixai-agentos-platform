@@ -1,0 +1,9 @@
+namespace: agentos
+resources:
+  - agent-orchestrator-deployment.yaml
+  - agent-orchestrator-service.yaml
+  - model-policy-deployment.yaml
+  - model-policy-service.yaml
+  - federation-deployment.yaml
+  - federation-service.yaml
+  - peers-configmap.yaml

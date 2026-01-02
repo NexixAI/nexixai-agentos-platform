@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentos-agent-orchestrator
+  labels:
+    app: agentos-agent-orchestrator
+spec:
+  selector:
+    app: agentos-agent-orchestrator
+  ports:
+    - name: http
+      port: 50081
+      targetPort: 8081
