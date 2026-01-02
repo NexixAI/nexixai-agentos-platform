@@ -22,8 +22,12 @@ Key AgentOS environment variables and how they should be set per mode.
 | `AGENTOS_FED_FORWARD_BASE_BACKOFF_MS` | Forward base backoff (ms) | `250` | Optional | Optional |
 | `AGENTOS_PROM_URL` | Prometheus base URL (optional observability check) | empty | Optional | Optional |
 | `AGENTOS_GRAFANA_URL` | Grafana base URL (optional observability check) | empty | Optional | Optional |
+| `AGENTOS_SERVICE_TOKEN` / `_FILE` | Service-to-service token | empty | Optional | **Required when service tokens enabled (use *_FILE in prod)** |
+| `AGENTOS_FED_SHARED_SECRET` / `_FILE` | Federation shared secret/token | empty | Optional | **Required for secured federation; use *_FILE** |
+| `AGENTOS_SIGNING_KEY` / `_FILE` | Signing key material | empty | Optional | **Required when signing enabled; use *_FILE** |
 
 Notes:
 - Prod mode must fail fast when required values are missing or unreadable (e.g., `AGENTOS_PEERS_FILE`).
 - Metrics endpoints must be protected in prod (`AGENTOS_METRICS_REQUIRE_AUTH=1`).
 - Do not rely on dev conveniences (`AGENTOS_DEFAULT_TENANT`, `AGENTOS_ALLOW_DEV_HEADERS`) in prod.
+- Prefer `_FILE` variants or external secret manager hooks (via `internal/secrets.Loader`) for sensitive values.

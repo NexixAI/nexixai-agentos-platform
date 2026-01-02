@@ -17,6 +17,8 @@ services:
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
     command: ["go","run","./cmd/agentos","serve","--addr",":8081","agent-orchestrator"]
+    env_file:
+      - ./secrets.example.env
     environment:
       - AGENTOS_SERVICE=agent-orchestrator
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -33,6 +35,8 @@ services:
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
     command: ["go","run","./cmd/agentos","serve","--addr",":8082","model-policy"]
+    env_file:
+      - ./secrets.example.env
     environment:
       - AGENTOS_SERVICE=model-policy
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -47,6 +51,8 @@ services:
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
     command: ["go","run","./cmd/agentos","serve","--addr",":8083","federation"]
+    env_file:
+      - ./secrets.example.env
     environment:
       - AGENTOS_SERVICE=federation
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -65,6 +71,8 @@ services:
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
     command: ["go","run","./cmd/agentos","serve","--addr",":8084","agent-orchestrator"]
+    env_file:
+      - ./secrets.example.env
     environment:
       - AGENTOS_SERVICE=agent-orchestrator
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -81,6 +89,8 @@ services:
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
     command: ["go","run","./cmd/agentos","serve","--addr",":8085","model-policy"]
+    env_file:
+      - ./secrets.example.env
     environment:
       - AGENTOS_SERVICE=model-policy
       - AGENTOS_DEFAULT_TENANT=tnt_demo
@@ -95,6 +105,8 @@ services:
       - go-mod-cache:/go/pkg/mod
       - go-build-cache:/root/.cache/go-build
     command: ["go","run","./cmd/agentos","serve","--addr",":8086","federation"]
+    env_file:
+      - ./secrets.example.env
     environment:
       - AGENTOS_SERVICE=federation
       - AGENTOS_DEFAULT_TENANT=tnt_demo

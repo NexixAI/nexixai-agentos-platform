@@ -33,3 +33,11 @@ Do not change normative docs under `docs/product/agentos-prs/` or `docs/api/`.
 ## Deliverables
 - Secret-loading mechanism (minimal)
 - Docs under `docs/plan/v1.02/tracks/` explaining the prod path
+
+---
+
+## Implementation notes (v1.02 track delivery)
+- Secret loader: `internal/secrets.Loader` resolves `SECRET` -> `SECRET_FILE` -> optional external provider hook; no secret values are logged, and `Require` enforces fail-fast when needed.
+- Compose: `deploy/local/compose.yaml` and `deploy/local/compose.federation-2node.yaml` now load `env_file: ./secrets.example.env` placeholders (fake values only). Override with per-env files or secret mounts; never commit real secrets.
+- Prod path guidance: see `docs/plan/v1.02/tracks/secrets-prod-path.md` for rotation steps (service tokens, federation credentials, signing keys) and secret manager hook usage.
+- Logging: tests assert loader logs do not contain secret material; keep startup logs limited to source/key names only.
