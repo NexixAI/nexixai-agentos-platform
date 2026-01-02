@@ -289,19 +289,19 @@ Remaining work is environmental and operational, not architectural. These tracks
 
 These are executed as PRs, but they are not “phases” of v1.02.
 
-1) **Local deployment parity with CI**  
+1) **Local deployment parity with CI** — ✅ Complete  
    - Goal: one-command local bring-up across Windows/macOS/Linux; eliminate port conflicts and credential-helper traps.
    - Evidence: local smoke script + documented reset/nuke flows.
 
-2) **Production-grade configuration validation**  
+2) **Production-grade configuration validation** — ✅ Complete  
    - Goal: fail-fast on misconfig, produce clear diagnostics, no silent defaults that reduce safety.
    - Evidence: config validation tests + documented configuration matrix.
 
-3) **Secrets management integration (prod path)**  
+3) **Secrets management integration (prod path)** — ✅ Complete  
    - Goal: no plaintext secrets in repo; support secret manager + rotation; audit access.
    - Evidence: documented integration and tests that secrets do not leak to logs.
 
-4) **Optional Helm / cloud packaging**  
+4) **Optional Helm / cloud packaging** — ✅ Complete  
    - Goal: reproducible k8s deployment templates; preserve tenancy + audit + federation invariants.
    - Evidence: packaging docs + minimal example environment.
 
