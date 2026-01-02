@@ -1,0 +1,10 @@
+namespace: agentos
+resources:
+  - ../../base
+secretGenerator:
+  - name: agentos-secrets
+    envs:
+      - secrets.env.example
+    type: Opaque
+patches:
+  - path: patch-env-dev.yaml

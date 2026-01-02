@@ -36,3 +36,14 @@ Do not change normative docs under `docs/product/agentos-prs/` or `docs/api/`.
 ## Deliverables
 - `deploy/k8s/*`
 - Packaging docs in `docs/plan/v1.02/tracks/`
+
+---
+
+## Implementation notes (v1.02 track delivery)
+- Packaging uses Kustomize (Helm alternative) under `deploy/k8s/`:
+  - `base/` defines Deployments + Services for Agent Orchestrator, Model Policy, and Federation, plus a federation peers ConfigMap and metrics auth enabled.
+  - `overlays/local-dev/` sets `AGENTOS_PROFILE=dev`, seeds a default tenant, and generates a placeholder `agentos-secrets` Secret from `secrets.env.example`.
+- Secrets: pods expect a Secret `agentos-secrets`; `_FILE` variants are supported via `internal/secrets.Loader`. Example secret files are fake—replace with real values or external secret manager mounts.
+- Persistence: defaults to `emptyDir`; patch to PVCs for production.
+- Federation: peers seed file mounted at `/etc/agentos/peers/peers.seed.json`; edit/overlay to add remote peers.
+- Usage docs and smoke path are in `docs/plan/v1.02/tracks/k8s-packaging.md` (includes render checks via `kubectl kustomize` and optional port-forward smoke).

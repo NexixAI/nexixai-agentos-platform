@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentos-agent-orchestrator
+spec:
+  template:
+    spec:
+      containers:
+        - name: agentos
+          env:
+            - name: AGENTOS_PROFILE
+              value: dev
+            - name: AGENTOS_DEFAULT_TENANT
+              value: tnt_demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentos-model-policy
+spec:
+  template:
+    spec:
+      containers:
+        - name: agentos
+          env:
+            - name: AGENTOS_PROFILE
+              value: dev
+            - name: AGENTOS_DEFAULT_TENANT
+              value: tnt_demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentos-federation
+spec:
+  template:
+    spec:
+      containers:
+        - name: agentos
+          env:
+            - name: AGENTOS_PROFILE
+              value: dev
+            - name: AGENTOS_DEFAULT_TENANT
+              value: tnt_demo

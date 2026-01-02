@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentos-agent-orchestrator
+  labels:
+    app: agentos-agent-orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentos-agent-orchestrator
+  template:
+    metadata:
+      labels:
+        app: agentos-agent-orchestrator
+    spec:
+      containers:
+        - name: agentos
+          image: ghcr.io/nexixai/agentos:latest
+          args: ["serve", "--addr", ":8081", "agent-orchestrator"]
+          ports:
+            - containerPort: 8081
+          env:
+            - name: AGENTOS_SERVICE
+              value: agent-orchestrator
+            - name: AGENTOS_PROFILE
+              value: prod
+            - name: AGENTOS_METRICS_REQUIRE_AUTH
+              value: "1"
+            - name: AGENTOS_RUN_STORE_FILE
+              value: /var/agentos/agent-orchestrator/runs.json
+            - name: AGENTOS_AUDIT_SINK
+              value: file:/var/agentos/agent-orchestrator/audit.log
+            - name: AGENTOS_QUOTA_RUN_CREATE_QPS
+              value: "10"
+            - name: AGENTOS_QUOTA_CONCURRENT_RUNS
+              value: "25"
+          envFrom:
+            - secretRef:
+                name: agentos-secrets
+          volumeMounts:
+            - name: data
+              mountPath: /var/agentos
+      volumes:
+        - name: data
+          emptyDir: {}

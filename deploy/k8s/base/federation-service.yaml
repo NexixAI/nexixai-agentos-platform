@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentos-federation
+  labels:
+    app: agentos-federation
+spec:
+  selector:
+    app: agentos-federation
+  ports:
+    - name: http
+      port: 50083
+      targetPort: 8083
