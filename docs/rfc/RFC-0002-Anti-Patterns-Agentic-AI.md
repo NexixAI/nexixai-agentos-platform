@@ -1,7 +1,7 @@
 # RFC-0002: Common Anti-Patterns in Agentic AI Architecture
 
 **Status:** Draft  
-**Author:** Emily Carter  
+**Author:** Emily Yoshida  
 **Created:** 2026-01-02  
 **Updated:** 2026-01-02
 
