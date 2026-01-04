@@ -285,13 +285,21 @@ If health checks fail after `./agentos up`:
 
 This is a **scaffold/proof-of-concept** implementation. The following are intentionally stubbed:
 
+**Stubbed execution layers (v1.02 scope):**
 - **Agent execution**: Runs auto-progress through `queued` → `running` → `completed` without real execution
 - **Model providers**: Returns stub responses; no real LLM integration
-- **Persistence**: File-based JSON storage (not production-grade)
 - **Tool execution**: Not implemented
 - **Memory/KV store**: Not implemented
+- **Persistence**: File-based JSON storage (not production-grade)
 
-These stubs demonstrate the architecture and API contracts. Production implementations would replace the stub adapters.
+**Missing enforcement (tracked for completion via v1.02 gap-closure tracks):**
+- **Idempotency key enforcement**: API accepts `idempotency_key` but doesn't enforce deduplication → Track 05
+- **Run cancellation**: `POST /v1/runs/{run_id}:cancel` not implemented → Track 06
+- **Agent metadata endpoints**: `GET /v1/agents` not implemented → Track 07
+- **Policy engine logic**: Policy check framework present but returns allow-all → Track 08
+- **Federation mTLS**: Uses HTTP with bearer tokens; mTLS not configured → Track 09
+
+These stubs demonstrate the architecture and API contracts. Production implementations would replace the stub adapters. Gap-closure tracks (5-9) implement missing enforcement of v1.02 PRS requirements.
 
 ---
 

@@ -12,7 +12,18 @@ Single knob:
 - `configs/NEXT_TRACK.json` controls which track runs next.
 
 ## Track list
+
+### Deployment & Operations (Tracks 1-4)
 1. Track 01 — Local deployment parity with CI
 2. Track 02 — Production-grade configuration validation
 3. Track 03 — Secrets management integration (prod path)
 4. Track 04 — Optional Helm / cloud packaging
+
+### Gap Closure (Tracks 5-9)
+These tracks implement missing features identified in gap analysis 2026-01-03:
+
+5. Track 05 — Idempotency enforcement (PRS §4.3)
+6. Track 06 — Run lifecycle completion (PRS §4.2 cancel endpoint)
+7. Track 07 — Agent registry (PRS §4.2 metadata endpoints)
+8. Track 08 — Policy engine implementation (PRS §6.3 enforcement)
+9. Track 09 — Federation security hardening (PRS §7.4 mTLS/JWT)

@@ -19,7 +19,27 @@
     "4": {
       "slug": "helm-cloud-packaging",
       "doc": "docs/plan/v1.02/tracks/track-04-helm-cloud-packaging.md"
+    },
+    "5": {
+      "slug": "idempotency-enforcement",
+      "doc": "docs/plan/v1.02/tracks/track-05-idempotency-enforcement.md"
+    },
+    "6": {
+      "slug": "run-lifecycle-completion",
+      "doc": "docs/plan/v1.02/tracks/track-06-run-lifecycle-completion.md"
+    },
+    "7": {
+      "slug": "agent-registry",
+      "doc": "docs/plan/v1.02/tracks/track-07-agent-registry.md"
+    },
+    "8": {
+      "slug": "policy-engine-implementation",
+      "doc": "docs/plan/v1.02/tracks/track-08-policy-engine-implementation.md"
+    },
+    "9": {
+      "slug": "federation-security-hardening",
+      "doc": "docs/plan/v1.02/tracks/track-09-federation-security-hardening.md"
     }
   },
-  "notes": "Tracks are post-v1.02 execution work items. They are implemented as PRs but are not PRS phases. Do not change normative docs (PRS/schemas/OpenAPI) unless explicitly instructed by SPEC_AUTHORITY.md."
+  "notes": "Tracks 5-9 added to close gaps identified in 2026-01-03 gap analysis. Tracks are post-v1.02 execution work items. They are implemented as PRs but are not PRS phases. Do not change normative docs (PRS/schemas/OpenAPI) unless explicitly instructed by SPEC_AUTHORITY.md."
 }
