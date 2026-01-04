@@ -474,3 +474,36 @@ Required capabilities:
 - Tenant identity must be propagated (signed/verifiable)
 - Receiving peer must enforce tenant policies locally
 - Event streams must be tenant-scoped; no cross-tenant leakage
+
+---
+
+# 16) Known implementation gaps (v1.02)
+
+The following features are specified in this PRS but not implemented in v1.02 release:
+
+## 16.1 Idempotency key enforcement
+**Specified**: PRS §4.3 requires idempotency_key support on run creation
+**Status**: API accepts `idempotency_key` field but does not enforce deduplication
+**Track**: Track 05 — Idempotency enforcement
+
+## 16.2 Run cancellation
+**Specified**: PRS §4.2 lists `POST /v1/runs/{run_id}:cancel` as required endpoint
+**Status**: Endpoint not implemented
+**Track**: Track 06 — Run lifecycle completion
+
+## 16.3 Agent metadata endpoints
+**Specified**: PRS §4.2 lists `GET /v1/agents` and `GET /v1/agents/{agent_id}` as required
+**Status**: Endpoints not implemented
+**Track**: Track 07 — Agent registry
+
+## 16.4 Policy enforcement logic
+**Specified**: PRS §6.3 requires PII detection, allow/deny rules, budget enforcement
+**Status**: Policy check framework present but returns allow-all decisions
+**Track**: Track 08 — Policy engine implementation
+
+## 16.5 Federation mTLS
+**Specified**: PRS §7.4 recommends mTLS between stacks with JWT identity propagation
+**Status**: Federation uses HTTP with bearer tokens; mTLS not configured
+**Track**: Track 09 — Federation security hardening
+
+These gaps do not affect the core multi-tenant orchestration architecture demonstrated in v1.02. They are targeted for completion via execution tracks.
