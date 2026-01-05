@@ -203,6 +203,13 @@ func (s *Server) handleRuns(w http.ResponseWriter, r *http.Request) {
 	}
 	runID := parts[0]
 
+	// Check for :cancel action (e.g., /v1/runs/run_123:cancel)
+	if strings.HasSuffix(runID, ":cancel") {
+		runID = strings.TrimSuffix(runID, ":cancel")
+		s.handleCancel(w, r, tenantID, runID, ac)
+		return
+	}
+
 	if len(parts) == 2 && parts[1] == "events" {
 		s.handleEvents(w, r, tenantID, runID)
 		return
@@ -301,6 +308,57 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request, tenantID, 
 	_, _ = bw.WriteString("data: " + string(b) + "\n\n")
 	_ = bw.Flush()
 	flusher.Flush()
+}
+
+func (s *Server) handleCancel(w http.ResponseWriter, r *http.Request, tenantID, runID string, ac auth.AuthContext) {
+	if r.Method != http.MethodPost {
+		httpx.Error(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed", httpx.CorrelationID(r), false)
+		return
+	}
+
+	run, ok, err := s.runs.Get(r.Context(), tenantID, runID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "run_lookup_failed", "failed to load run", httpx.CorrelationID(r), true)
+		return
+	}
+	if !ok {
+		// Tenant isolation: return 404 (not 403) for runs not in this tenant
+		httpx.Error(w, http.StatusNotFound, "not_found", "run not found", httpx.CorrelationID(r), false)
+		return
+	}
+
+	// State transition validation
+	switch run.Status {
+	case "completed", "failed", "canceled":
+		// Cannot cancel from terminal states
+		httpx.Error(w, http.StatusConflict, "invalid_state_transition", "cannot cancel run in "+run.Status+" state", httpx.CorrelationID(r), false)
+		return
+	case "queued", "running":
+		// Can cancel from these states
+	default:
+		// Unknown state, allow cancellation
+	}
+
+	// Update run to canceled state
+	run.Status = "canceled"
+	run.CompletedAt = time.Now().UTC().Format(time.RFC3339)
+
+	if err := s.runs.Save(r.Context(), run); err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "run_persist_failed", "failed to persist run cancellation", httpx.CorrelationID(r), true)
+		return
+	}
+
+	// Decrement concurrent run quota
+	s.limiter.DecConcurrent(tenantID)
+
+	// Audit log
+	s.audit.Log(audit.Entry{
+		TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "runs.cancel", Resource: "run/" + runID, Outcome: "allowed",
+		CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
+	})
+
+	resp := types.RunCancelResponse{Run: run, CorrelationID: httpx.CorrelationID(r)}
+	httpx.JSON(w, http.StatusOK, resp)
 }
 
 func (s *Server) handleTenants(w http.ResponseWriter, r *http.Request) {

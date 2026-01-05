@@ -27,6 +27,11 @@ type RunGetResponse struct {
 	CorrelationID string `json:"correlation_id"`
 }
 
+type RunCancelResponse struct {
+	Run           Run    `json:"run"`
+	CorrelationID string `json:"correlation_id"`
+}
+
 type Run struct {
 	TenantID       string     `json:"tenant_id"`
 	AgentID        string     `json:"agent_id"`
