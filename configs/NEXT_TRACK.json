@@ -2,7 +2,7 @@
   "version": "1.0",
   "mode": "track",
   "plan_version": "v1.02",
-  "next_track": 7,
+  "next_track": 8,
   "tracks": {
     "1": {
       "slug": "local-deploy-parity",
