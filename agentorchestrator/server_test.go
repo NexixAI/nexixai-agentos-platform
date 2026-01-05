@@ -216,3 +216,193 @@ func TestCancelAlreadyCanceledRunReturns409(t *testing.T) {
 		t.Fatalf("expected 409 for second cancel, got %d: %s", cancelRec2.Code, cancelRec2.Body.String())
 	}
 }
+
+func TestListAgentsReturnsOnlyTenantAgents(t *testing.T) {
+	srv, err := New("test")
+	if err != nil {
+		t.Fatalf("New server error: %v", err)
+	}
+
+	// Create tenant A (requires tenants:admin scope)
+	createTenantAReq := httptest.NewRequest(http.MethodPost, "/v1/admin/tenants", bytes.NewBufferString(`{"tenant_id":"tnt_agent_a"}`))
+	createTenantAReq.Header.Set("Authorization", "Bearer test-token")
+	createTenantAReq.Header.Set("X-Tenant-Id", "tnt_agent_a")
+	createTenantAReq.Header.Set("X-Scopes", "tenants:admin")
+	createTenantARec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(createTenantARec, createTenantAReq)
+
+	// Create tenant B (requires tenants:admin scope)
+	createTenantBReq := httptest.NewRequest(http.MethodPost, "/v1/admin/tenants", bytes.NewBufferString(`{"tenant_id":"tnt_agent_b"}`))
+	createTenantBReq.Header.Set("Authorization", "Bearer test-token")
+	createTenantBReq.Header.Set("X-Tenant-Id", "tnt_agent_b")
+	createTenantBReq.Header.Set("X-Scopes", "tenants:admin")
+	createTenantBRec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(createTenantBRec, createTenantBReq)
+
+	// Manually create an agent for tenant A
+	agentA := types.Agent{
+		AgentID:   "agt_tenant_a",
+		TenantID:  "tnt_agent_a",
+		Name:      "Agent A",
+		Version:   "1.0",
+		Status:    "active",
+		CreatedAt: "2025-01-01T00:00:00Z",
+		UpdatedAt: "2025-01-01T00:00:00Z",
+	}
+	if err := srv.agents.Create(context.Background(), agentA); err != nil {
+		t.Fatalf("create agent A error: %v", err)
+	}
+
+	// Manually create an agent for tenant B
+	agentB := types.Agent{
+		AgentID:   "agt_tenant_b",
+		TenantID:  "tnt_agent_b",
+		Name:      "Agent B",
+		Version:   "1.0",
+		Status:    "active",
+		CreatedAt: "2025-01-01T00:00:00Z",
+		UpdatedAt: "2025-01-01T00:00:00Z",
+	}
+	if err := srv.agents.Create(context.Background(), agentB); err != nil {
+		t.Fatalf("create agent B error: %v", err)
+	}
+
+	// List agents for tenant A - should only get tenant A's agent
+	listReqA := httptest.NewRequest(http.MethodGet, "/v1/agents/", nil)
+	listReqA.Header.Set("Authorization", "Bearer test-token")
+	listReqA.Header.Set("X-Tenant-Id", "tnt_agent_a")
+	listRecA := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(listRecA, listReqA)
+
+	if listRecA.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", listRecA.Code, listRecA.Body.String())
+	}
+
+	var respA types.AgentListResponse
+	if err := json.Unmarshal(listRecA.Body.Bytes(), &respA); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+
+	if len(respA.Agents) != 1 {
+		t.Fatalf("expected 1 agent for tenant A, got %d", len(respA.Agents))
+	}
+	if respA.Agents[0].AgentID != "agt_tenant_a" {
+		t.Fatalf("expected agt_tenant_a, got %s", respA.Agents[0].AgentID)
+	}
+
+	// List agents for tenant B - should only get tenant B's agent
+	listReqB := httptest.NewRequest(http.MethodGet, "/v1/agents/", nil)
+	listReqB.Header.Set("Authorization", "Bearer test-token")
+	listReqB.Header.Set("X-Tenant-Id", "tnt_agent_b")
+	listRecB := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(listRecB, listReqB)
+
+	if listRecB.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", listRecB.Code, listRecB.Body.String())
+	}
+
+	var respB types.AgentListResponse
+	if err := json.Unmarshal(listRecB.Body.Bytes(), &respB); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+
+	if len(respB.Agents) != 1 {
+		t.Fatalf("expected 1 agent for tenant B, got %d", len(respB.Agents))
+	}
+	if respB.Agents[0].AgentID != "agt_tenant_b" {
+		t.Fatalf("expected agt_tenant_b, got %s", respB.Agents[0].AgentID)
+	}
+}
+
+func TestGetAgentFromDifferentTenantReturns404(t *testing.T) {
+	srv, err := New("test")
+	if err != nil {
+		t.Fatalf("New server error: %v", err)
+	}
+
+	// Create tenant A (requires tenants:admin scope)
+	createTenantAReq := httptest.NewRequest(http.MethodPost, "/v1/admin/tenants", bytes.NewBufferString(`{"tenant_id":"tnt_get_a"}`))
+	createTenantAReq.Header.Set("Authorization", "Bearer test-token")
+	createTenantAReq.Header.Set("X-Tenant-Id", "tnt_get_a")
+	createTenantAReq.Header.Set("X-Scopes", "tenants:admin")
+	createTenantARec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(createTenantARec, createTenantAReq)
+
+	// Create tenant B (requires tenants:admin scope)
+	createTenantBReq := httptest.NewRequest(http.MethodPost, "/v1/admin/tenants", bytes.NewBufferString(`{"tenant_id":"tnt_get_b"}`))
+	createTenantBReq.Header.Set("Authorization", "Bearer test-token")
+	createTenantBReq.Header.Set("X-Tenant-Id", "tnt_get_b")
+	createTenantBReq.Header.Set("X-Scopes", "tenants:admin")
+	createTenantBRec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(createTenantBRec, createTenantBReq)
+
+	// Create an agent for tenant A
+	agentA := types.Agent{
+		AgentID:   "agt_private",
+		TenantID:  "tnt_get_a",
+		Name:      "Private Agent",
+		Version:   "1.0",
+		Status:    "active",
+		CreatedAt: "2025-01-01T00:00:00Z",
+		UpdatedAt: "2025-01-01T00:00:00Z",
+	}
+	if err := srv.agents.Create(context.Background(), agentA); err != nil {
+		t.Fatalf("create agent error: %v", err)
+	}
+
+	// Tenant A can get the agent
+	getReqA := httptest.NewRequest(http.MethodGet, "/v1/agents/agt_private", nil)
+	getReqA.Header.Set("Authorization", "Bearer test-token")
+	getReqA.Header.Set("X-Tenant-Id", "tnt_get_a")
+	getRecA := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(getRecA, getReqA)
+
+	if getRecA.Code != http.StatusOK {
+		t.Fatalf("expected 200 for tenant A, got %d: %s", getRecA.Code, getRecA.Body.String())
+	}
+
+	var respA types.AgentGetResponse
+	if err := json.Unmarshal(getRecA.Body.Bytes(), &respA); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if respA.Agent.AgentID != "agt_private" {
+		t.Fatalf("expected agt_private, got %s", respA.Agent.AgentID)
+	}
+
+	// Tenant B should get 404 when trying to get tenant A's agent
+	getReqB := httptest.NewRequest(http.MethodGet, "/v1/agents/agt_private", nil)
+	getReqB.Header.Set("Authorization", "Bearer test-token")
+	getReqB.Header.Set("X-Tenant-Id", "tnt_get_b")
+	getRecB := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(getRecB, getReqB)
+
+	if getRecB.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for tenant B accessing tenant A's agent, got %d: %s", getRecB.Code, getRecB.Body.String())
+	}
+}
+
+func TestGetNonExistentAgentReturns404(t *testing.T) {
+	srv, err := New("test")
+	if err != nil {
+		t.Fatalf("New server error: %v", err)
+	}
+
+	// Create tenant (requires tenants:admin scope)
+	createTenantReq := httptest.NewRequest(http.MethodPost, "/v1/admin/tenants", bytes.NewBufferString(`{"tenant_id":"tnt_nonexist"}`))
+	createTenantReq.Header.Set("Authorization", "Bearer test-token")
+	createTenantReq.Header.Set("X-Tenant-Id", "tnt_nonexist")
+	createTenantReq.Header.Set("X-Scopes", "tenants:admin")
+	createTenantRec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(createTenantRec, createTenantReq)
+
+	// Try to get non-existent agent
+	getReq := httptest.NewRequest(http.MethodGet, "/v1/agents/agt_does_not_exist", nil)
+	getReq.Header.Set("Authorization", "Bearer test-token")
+	getReq.Header.Set("X-Tenant-Id", "tnt_nonexist")
+	getRec := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(getRec, getReq)
+
+	if getRec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for non-existent agent, got %d: %s", getRec.Code, getRec.Body.String())
+	}
+}
