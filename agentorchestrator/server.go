@@ -123,17 +123,33 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check idempotency key if provided
+	if req.IdempotencyKey != "" {
+		existingRun, found, err := s.runs.GetByIdempotencyKey(r.Context(), tenantID, req.IdempotencyKey)
+		if err != nil {
+			// Fail-open for availability: log error and proceed with creation
+			// In production, this should use structured logging
+		} else if found {
+			// Return existing run with 200 OK (not 201 Created)
+			s.limiter.DecConcurrent(tenantID)
+			resp := types.RunCreateResponse{Run: existingRun, CorrelationID: httpx.CorrelationID(r)}
+			httpx.JSON(w, http.StatusOK, resp)
+			return
+		}
+	}
+
 	now := time.Now().UTC().Format(time.RFC3339)
 	runID := id.New("run")
 
 	run := types.Run{
-		TenantID:   tenantID,
-		AgentID:    agentID,
-		RunID:      runID,
-		Status:     "queued",
-		CreatedAt:  now,
-		EventsURL:  "/v1/runs/" + runID + "/events",
-		RunOptions: req.RunOptions,
+		TenantID:       tenantID,
+		AgentID:        agentID,
+		RunID:          runID,
+		Status:         "queued",
+		CreatedAt:      now,
+		EventsURL:      "/v1/runs/" + runID + "/events",
+		RunOptions:     req.RunOptions,
+		IdempotencyKey: req.IdempotencyKey,
 	}
 
 	if err := s.runs.Create(r.Context(), run); err != nil {

@@ -28,17 +28,18 @@ type RunGetResponse struct {
 }
 
 type Run struct {
-	TenantID    string     `json:"tenant_id"`
-	AgentID     string     `json:"agent_id"`
-	RunID       string     `json:"run_id"`
-	Status      string     `json:"status"`
-	CreatedAt   string     `json:"created_at"`
-	StartedAt   string     `json:"started_at,omitempty"`
-	CompletedAt string     `json:"completed_at,omitempty"`
-	EventsURL   string     `json:"events_url"`
-	RunOptions  RunOptions `json:"run_options,omitempty"`
-	Output      *RunOutput `json:"output,omitempty"`
-	Error       *RunError  `json:"error,omitempty"`
+	TenantID       string     `json:"tenant_id"`
+	AgentID        string     `json:"agent_id"`
+	RunID          string     `json:"run_id"`
+	Status         string     `json:"status"`
+	CreatedAt      string     `json:"created_at"`
+	StartedAt      string     `json:"started_at,omitempty"`
+	CompletedAt    string     `json:"completed_at,omitempty"`
+	EventsURL      string     `json:"events_url"`
+	RunOptions     RunOptions `json:"run_options,omitempty"`
+	Output         *RunOutput `json:"output,omitempty"`
+	Error          *RunError  `json:"error,omitempty"`
+	IdempotencyKey string     `json:"idempotency_key,omitempty"`
 }
 
 type RunInput struct {

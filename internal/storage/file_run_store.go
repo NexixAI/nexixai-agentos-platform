@@ -65,6 +65,26 @@ func (s *fileRunStore) Get(ctx context.Context, tenantID, runID string) (types.R
 	return run, ok, nil
 }
 
+func (s *fileRunStore) GetByIdempotencyKey(ctx context.Context, tenantID, idempotencyKey string) (types.Run, bool, error) {
+	if err := ctxErr(ctx); err != nil {
+		return types.Run{}, false, err
+	}
+	if tenantID == "" || idempotencyKey == "" {
+		return types.Run{}, false, nil
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Iterate through runs to find matching idempotency key for tenant
+	for _, run := range s.runs {
+		if run.TenantID == tenantID && run.IdempotencyKey == idempotencyKey {
+			return run, true, nil
+		}
+	}
+	return types.Run{}, false, nil
+}
+
 func (s *fileRunStore) Save(ctx context.Context, run types.Run) error {
 	if err := ctxErr(ctx); err != nil {
 		return err
