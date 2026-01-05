@@ -21,6 +21,7 @@ var (
 type RunStore interface {
 	Create(ctx context.Context, run types.Run) error
 	Get(ctx context.Context, tenantID, runID string) (types.Run, bool, error)
+	GetByIdempotencyKey(ctx context.Context, tenantID, idempotencyKey string) (types.Run, bool, error)
 	Save(ctx context.Context, run types.Run) error
 }
 
