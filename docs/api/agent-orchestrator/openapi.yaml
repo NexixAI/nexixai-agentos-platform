@@ -123,6 +123,48 @@ paths:
           $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
+  /v1/runs/{run_id}:cancel:
+    post:
+      tags:
+      - Runs
+      summary: Cancel a run
+      description: |
+        Cancels a run that is currently in `queued` or `running` state.
+
+        State transitions:
+        - Can cancel from: `queued`, `running`
+        - Cannot cancel from: `completed`, `failed`, `canceled` (returns 409 Conflict)
+
+        Cancellation sets `status` to `canceled` and populates `completed_at`.
+      operationId: cancelRun
+      parameters:
+      - $ref: '#/components/parameters/RunId'
+      - $ref: '#/components/parameters/XTenantId'
+      - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        '200':
+          description: Run canceled successfully
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunCancelResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/runs/{run_id}/events:
     get:
       tags:
@@ -325,6 +367,16 @@ components:
         correlation_id:
           type: string
     RunGetResponse:
+      type: object
+      required:
+      - run
+      - correlation_id
+      properties:
+        run:
+          $ref: '#/components/schemas/Run'
+        correlation_id:
+          type: string
+    RunCancelResponse:
       type: object
       required:
       - run
