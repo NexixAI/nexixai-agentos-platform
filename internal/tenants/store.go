@@ -101,6 +101,9 @@ func (s *Store) Update(id string, update types.Tenant) (types.Tenant, error) {
 	if update.Metadata != nil {
 		cur.Metadata = update.Metadata
 	}
+	if update.Policy != nil {
+		cur.Policy = update.Policy
+	}
 	cur.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 	s.tenants[id] = cur
 	return cur, nil

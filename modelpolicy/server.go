@@ -12,6 +12,7 @@ import (
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/metrics"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/middleware"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/quota"
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/tenants"
 	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/types"
 )
 
@@ -22,9 +23,14 @@ type Server struct {
 	providers *registry
 	policy    *policyEngine
 	usage     *usageMeter
+	tenants   *tenants.Store
 }
 
 func New(version string) *Server {
+	tenantStore := tenants.NewStore()
+	if def := auth.DefaultTenant(); def != "" {
+		tenantStore.EnsureDefault(def)
+	}
 	return &Server{
 		version:   version,
 		limiter:   quota.NewFromEnv("AGENTOS_QUOTA_INVOKE_QPS", "AGENTOS_QUOTA_UNUSED_CONCURRENT", 20, 999999),
@@ -32,6 +38,7 @@ func New(version string) *Server {
 		providers: newRegistry(),
 		policy:    newPolicyEngine(),
 		usage:     newUsageMeter(),
+		tenants:   tenantStore,
 	}
 }
 
@@ -94,7 +101,14 @@ func (s *Server) handleInvoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decision, reasons := s.policy.Evaluate(tenantID, ac, req)
+	// Look up tenant policy
+	var policy *types.TenantPolicy
+	if tenant, ok := s.tenants.Get(tenantID); ok {
+		policy = tenant.Policy
+	}
+
+	// Check model allow/deny policy
+	decision, reasons := s.policy.Evaluate(tenantID, ac, req, policy)
 	if decision != "allow" {
 		httpx.Error(w, http.StatusForbidden, "policy_blocked", strings.Join(reasons, "; "), httpx.CorrelationID(r), false)
 		s.audit.Log(audit.Entry{
@@ -103,6 +117,20 @@ func (s *Server) handleInvoke(w http.ResponseWriter, r *http.Request) {
 			Meta: map[string]any{"policy_reasons": reasons},
 		})
 		return
+	}
+
+	// Check token budget
+	if policy != nil && policy.TokenBudget != nil {
+		allowed, reason := s.usage.CheckBudget(tenantID, policy.TokenBudget)
+		if !allowed {
+			httpx.Error(w, http.StatusForbidden, "policy_blocked", reason, httpx.CorrelationID(r), false)
+			s.audit.Log(audit.Entry{
+				TenantID: tenantID, PrincipalID: ac.PrincipalID, Action: "models.invoke", Resource: "model/" + req.ModelID, Outcome: "denied",
+				CorrelationID: httpx.CorrelationID(r), RequestID: r.Header.Get("X-Request-Id"),
+				Meta: map[string]any{"policy_reasons": []string{reason}},
+			})
+			return
+		}
 	}
 
 	prov, model, ok := s.providers.Resolve(req.ModelID)
