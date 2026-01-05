@@ -114,3 +114,25 @@ type Event struct {
 	Trace    TraceContext   `json:"trace"`
 	Payload  map[string]any `json:"payload"`
 }
+
+// Agent represents agent metadata for the registry.
+type Agent struct {
+	AgentID     string `json:"agent_id"`
+	TenantID    string `json:"tenant_id"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	Version     string `json:"version"`
+	Status      string `json:"status"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
+}
+
+type AgentListResponse struct {
+	Agents        []Agent `json:"agents"`
+	CorrelationID string  `json:"correlation_id"`
+}
+
+type AgentGetResponse struct {
+	Agent         Agent  `json:"agent"`
+	CorrelationID string `json:"correlation_id"`
+}

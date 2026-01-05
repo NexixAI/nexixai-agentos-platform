@@ -16,6 +16,7 @@ servers:
 - url: /
 tags:
 - name: Health
+- name: Agents
 - name: Runs
 - name: Events
 security:
@@ -38,6 +39,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/agents:
+    get:
+      tags:
+      - Agents
+      summary: List agents
+      description: |
+        Lists all agents for the authenticated tenant.
+        Returns tenant-scoped agents only.
+      operationId: listAgents
+      parameters:
+      - $ref: '#/components/parameters/XTenantId'
+      - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/agents/{agent_id}:
+    get:
+      tags:
+      - Agents
+      summary: Get agent metadata
+      description: |
+        Returns metadata for the specified agent.
+        Returns 404 if agent does not exist or belongs to a different tenant.
+      operationId: getAgent
+      parameters:
+      - $ref: '#/components/parameters/AgentId'
+      - $ref: '#/components/parameters/XTenantId'
+      - $ref: '#/components/parameters/XCorrelationId'
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentGetResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/agents/{agent_id}/runs:
@@ -384,6 +452,61 @@ components:
       properties:
         run:
           $ref: '#/components/schemas/Run'
+        correlation_id:
+          type: string
+    Agent:
+      type: object
+      required:
+      - agent_id
+      - tenant_id
+      - name
+      - version
+      - status
+      - created_at
+      - updated_at
+      properties:
+        agent_id:
+          type: string
+        tenant_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - deprecated
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    AgentListResponse:
+      type: object
+      required:
+      - agents
+      - correlation_id
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Agent'
+        correlation_id:
+          type: string
+    AgentGetResponse:
+      type: object
+      required:
+      - agent
+      - correlation_id
+      properties:
+        agent:
+          $ref: '#/components/schemas/Agent'
         correlation_id:
           type: string
     RunStatus:

@@ -2,6 +2,7 @@ package agentorchestrator
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -24,6 +25,7 @@ type Server struct {
 	version string
 
 	runs    storage.RunStore
+	agents  storage.AgentStore
 	tenants *tenants.Store
 	limiter *quota.Limiter
 	audit   audit.Logger
@@ -34,17 +36,44 @@ func New(version string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	tenantStore := tenants.NewStore()
-	if def := auth.DefaultTenant(); def != "" {
-		tenantStore.EnsureDefault(def)
+	agentStore, err := storage.NewAgentStoreFromEnv()
+	if err != nil {
+		return nil, err
 	}
-	return &Server{
+	tenantStore := tenants.NewStore()
+	defaultTenant := auth.DefaultTenant()
+	if defaultTenant != "" {
+		tenantStore.EnsureDefault(defaultTenant)
+	}
+	srv := &Server{
 		version: version,
 		runs:    runStore,
+		agents:  agentStore,
 		tenants: tenantStore,
 		limiter: quota.NewFromEnv("AGENTOS_QUOTA_RUN_CREATE_QPS", "AGENTOS_QUOTA_CONCURRENT_RUNS", 10, 25),
 		audit:   audit.NewFromEnv(),
-	}, nil
+	}
+	// Seed demo agent for default tenant
+	if defaultTenant != "" {
+		srv.seedDemoAgent(defaultTenant)
+	}
+	return srv, nil
+}
+
+func (s *Server) seedDemoAgent(tenantID string) {
+	now := time.Now().UTC().Format(time.RFC3339)
+	demoAgent := types.Agent{
+		AgentID:     "agt_demo",
+		TenantID:    tenantID,
+		Name:        "Demo Agent",
+		Description: "Sample agent for validation",
+		Version:     "1.0",
+		Status:      "active",
+		CreatedAt:   now,
+		UpdatedAt:   now,
+	}
+	// Ignore error if agent already exists
+	_ = s.agents.Create(context.Background(), demoAgent)
 }
 
 func (s *Server) Handler() http.Handler {
@@ -71,11 +100,6 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		httpx.Error(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed", httpx.CorrelationID(r), false)
-		return
-	}
-
 	ac, _ := auth.Get(r.Context())
 	tenantID, ok := resolveTenant(w, r, ac)
 	if !ok {
@@ -86,6 +110,65 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	path := strings.TrimPrefix(r.URL.Path, "/v1/agents/")
+	path = strings.Trim(path, "/")
+
+	// GET /v1/agents - List agents
+	if path == "" {
+		if r.Method != http.MethodGet {
+			httpx.Error(w, http.StatusMethodNotAllowed, "method_not_allowed", "method not allowed", httpx.CorrelationID(r), false)
+			return
+		}
+		s.handleAgentList(w, r, tenantID)
+		return
+	}
+
+	parts := strings.Split(path, "/")
+
+	// GET /v1/agents/{agent_id} - Get agent metadata
+	if len(parts) == 1 && r.Method == http.MethodGet {
+		s.handleAgentGet(w, r, tenantID, parts[0])
+		return
+	}
+
+	// POST /v1/agents/{agent_id}/runs - Create run
+	if len(parts) == 2 && parts[1] == "runs" && r.Method == http.MethodPost {
+		s.handleRunCreate(w, r, tenantID, parts[0], ac)
+		return
+	}
+
+	httpx.Error(w, http.StatusNotFound, "not_found", "not found", httpx.CorrelationID(r), false)
+}
+
+func (s *Server) handleAgentList(w http.ResponseWriter, r *http.Request, tenantID string) {
+	agents, err := s.agents.List(r.Context(), tenantID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "agent_list_failed", "failed to list agents", httpx.CorrelationID(r), true)
+		return
+	}
+	if agents == nil {
+		agents = []types.Agent{}
+	}
+	resp := types.AgentListResponse{Agents: agents, CorrelationID: httpx.CorrelationID(r)}
+	httpx.JSON(w, http.StatusOK, resp)
+}
+
+func (s *Server) handleAgentGet(w http.ResponseWriter, r *http.Request, tenantID, agentID string) {
+	agent, ok, err := s.agents.Get(r.Context(), tenantID, agentID)
+	if err != nil {
+		httpx.Error(w, http.StatusInternalServerError, "agent_lookup_failed", "failed to load agent", httpx.CorrelationID(r), true)
+		return
+	}
+	if !ok {
+		// Return 404 for non-existent or different tenant agent
+		httpx.Error(w, http.StatusNotFound, "not_found", "agent not found", httpx.CorrelationID(r), false)
+		return
+	}
+	resp := types.AgentGetResponse{Agent: agent, CorrelationID: httpx.CorrelationID(r)}
+	httpx.JSON(w, http.StatusOK, resp)
+}
+
+func (s *Server) handleRunCreate(w http.ResponseWriter, r *http.Request, tenantID, agentID string, ac auth.AuthContext) {
 	if !s.limiter.AllowQPS(tenantID) {
 		metrics.IncQuotaDenied("agent-orchestrator", "runs_create_qps")
 		httpx.Error(w, http.StatusTooManyRequests, "quota_exceeded", "run create QPS exceeded", httpx.CorrelationID(r), true)
@@ -106,15 +189,6 @@ func (s *Server) handleAgents(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
-	path := strings.TrimPrefix(r.URL.Path, "/v1/agents/")
-	parts := strings.Split(strings.Trim(path, "/"), "/")
-	if len(parts) != 2 || parts[1] != "runs" {
-		s.limiter.DecConcurrent(tenantID)
-		httpx.Error(w, http.StatusNotFound, "not_found", "not found", httpx.CorrelationID(r), false)
-		return
-	}
-	agentID := parts[0]
 
 	var req types.RunCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
