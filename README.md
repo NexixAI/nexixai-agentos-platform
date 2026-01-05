@@ -197,6 +197,55 @@ docker compose \
   down -v
 ```
 
+### Federation Security (mTLS + JWT)
+
+Federation supports mTLS and JWT verification for production deployments.
+
+**Local Development (generate self-signed certs):**
+
+```bash
+./scripts/generate-federation-certs.sh
+```
+
+This generates CA, server, and client certificates in `./certs/federation/`.
+
+**Enable mTLS:**
+
+```bash
+# Server configuration
+export AGENTOS_FED_REQUIRE_MTLS=true
+export AGENTOS_FED_SERVER_CERT_FILE=./certs/federation/server-cert.pem
+export AGENTOS_FED_SERVER_KEY_FILE=./certs/federation/server-key.pem
+export AGENTOS_FED_CA_CERT_FILE=./certs/federation/ca-cert.pem
+
+# Client configuration (for forwarder)
+export AGENTOS_FED_CLIENT_CERT_FILE=./certs/federation/client-cert.pem
+export AGENTOS_FED_CLIENT_KEY_FILE=./certs/federation/client-key.pem
+```
+
+**Enable JWT Verification:**
+
+```bash
+# Generate RSA key pair for JWT signing
+ssh-keygen -t rsa -b 4096 -m PEM -f ./certs/federation/jwt-key -N ""
+openssl rsa -in ./certs/federation/jwt-key -pubout -out ./certs/federation/jwt-key.pub
+
+# Configure JWT verification
+export AGENTOS_FED_JWT_PUBLIC_KEY_FILE=./certs/federation/jwt-key.pub
+```
+
+Federation will verify JWT signatures and extract `tenant_id` and `principal_id` from claims.
+
+**JWT Claims (required):**
+- `tenant_id` or `tid` - Tenant identifier
+- `principal_id` or `sub` - Principal identifier
+
+**Production:**
+- Use proper certificate management (e.g., cert-manager, AWS ACM, Let's Encrypt)
+- Rotate certificates regularly
+- Use a proper JWT signing service (e.g., Auth0, Keycloak)
+- Store private keys in secret managers (e.g., AWS Secrets Manager, HashiCorp Vault)
+
 ---
 
 ## Multi-Tenancy

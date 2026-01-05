@@ -2,6 +2,8 @@ package federation
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -9,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/eyoshidagorgonia/nexixai-agentos-platform/internal/secrets"
 )
 
 type Forwarder struct {
@@ -31,11 +35,61 @@ func NewForwarder() *Forwarder {
 		}
 	}
 
+	// Configure mTLS if certs are provided
+	transport := &http.Transport{}
+	tlsConfig := configureMTLSClient()
+	if tlsConfig != nil {
+		transport.TLSClientConfig = tlsConfig
+	}
+
 	return &Forwarder{
-		Client:      &http.Client{Timeout: 10 * time.Second},
+		Client:      &http.Client{Timeout: 10 * time.Second, Transport: transport},
 		MaxAttempts: maxAttempts,
 		BaseBackoff: baseBackoff,
 	}
+}
+
+// configureMTLSClient loads client cert/key and CA cert for mTLS.
+// Returns nil if certs not configured (falls back to standard HTTP/HTTPS).
+func configureMTLSClient() *tls.Config {
+	loader := secrets.NewLoader()
+
+	// Load client cert and key
+	clientCert, _ := loader.Load("AGENTOS_FED_CLIENT_CERT")
+	clientKey, _ := loader.Load("AGENTOS_FED_CLIENT_KEY")
+	caCert, _ := loader.Load("AGENTOS_FED_CA_CERT")
+
+	// If no certs configured, return nil (dev mode)
+	if clientCert == "" && clientKey == "" && caCert == "" {
+		return nil
+	}
+
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	// Load client certificate if provided
+	if clientCert != "" && clientKey != "" {
+		cert, err := tls.X509KeyPair([]byte(clientCert), []byte(clientKey))
+		if err != nil {
+			// Log error but don't fail - fallback to no client cert
+			fmt.Fprintf(os.Stderr, "WARN: failed to load federation client cert: %v\n", err)
+		} else {
+			tlsConfig.Certificates = []tls.Certificate{cert}
+		}
+	}
+
+	// Load CA cert if provided
+	if caCert != "" {
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM([]byte(caCert)) {
+			fmt.Fprintf(os.Stderr, "WARN: failed to parse federation CA cert\n")
+		} else {
+			tlsConfig.RootCAs = caCertPool
+		}
+	}
+
+	return tlsConfig
 }
 
 // ForwardRun calls the remote Agent Orchestrator Run Create endpoint and returns (remote_run_id, remote_events_url, status).

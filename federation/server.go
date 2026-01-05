@@ -18,11 +18,12 @@ import (
 type Server struct {
 	version string
 
-	registry *Registry
-	forward  *Forwarder
-	proxy    *SSEProxy
-	index    *forwardIndex
-	events   *eventStore
+	registry    *Registry
+	forward     *Forwarder
+	proxy       *SSEProxy
+	index       *forwardIndex
+	events      *eventStore
+	jwtVerifier *auth.JWTVerifier
 
 	audit audit.Logger
 }
@@ -33,14 +34,27 @@ func New(version string) *Server {
 	if idxPath == "" {
 		idxPath = "data/federation/forward-index.json"
 	}
+
+	// Initialize JWT verifier (may be disabled in dev mode)
+	jwtVerifier, err := auth.NewJWTVerifierFromEnv()
+	if err != nil {
+		// Log error but continue - JWT verification will be disabled
+		audit.NewFromEnv().Log(audit.Entry{
+			Action:  "federation.jwt_init_failed",
+			Outcome: "error",
+			Meta:    map[string]any{"error": err.Error()},
+		})
+	}
+
 	return &Server{
-		version:  version,
-		registry: reg,
-		forward:  NewForwarder(),
-		proxy:    NewSSEProxy(),
-		index:    newForwardIndexPersistent(idxPath),
-		events:   newEventStore(),
-		audit:    audit.NewFromEnv(),
+		version:     version,
+		registry:    reg,
+		forward:     NewForwarder(),
+		proxy:       NewSSEProxy(),
+		index:       newForwardIndexPersistent(idxPath),
+		events:      newEventStore(),
+		jwtVerifier: jwtVerifier,
+		audit:       audit.NewFromEnv(),
 	}
 }
 
@@ -56,10 +70,56 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/v1/federation/events:ingest", s.handleEventsIngest)
 	mux.Handle("/metrics", middleware.ProtectMetrics(metrics.Handler()))
 
-	h := middleware.WithAuth(mux)
+	h := s.withJWTVerification(mux)
+	h = middleware.WithAuth(h)
 	h = middleware.EnsureRequestID(h)
 	h = metrics.Instrument("federation", h)
 	return h
+}
+
+// withJWTVerification adds JWT verification middleware.
+// Verifies bearer token if JWT verification is enabled.
+// Returns 401 Unauthorized if verification fails.
+func (s *Server) withJWTVerification(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip verification if JWT verifier not configured or not enabled
+		if s.jwtVerifier == nil || !s.jwtVerifier.Enabled() {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Extract bearer token
+		authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
+		if !strings.HasPrefix(strings.ToLower(authHeader), "bearer ") {
+			// No bearer token - allow request (may be authenticated by other means)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		token := strings.TrimSpace(authHeader[len("bearer "):])
+		if token == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Verify JWT and extract claims
+		tenantID, principalID, err := s.jwtVerifier.VerifyAndExtract(token)
+		if err != nil && !errors.Is(err, auth.ErrJWTVerifyDisabled) {
+			// Verification failed
+			httpx.Error(w, http.StatusUnauthorized, "jwt_verification_failed", "JWT verification failed", httpx.CorrelationID(r), false)
+			return
+		}
+
+		// Add extracted claims to headers for downstream auth middleware
+		if tenantID != "" {
+			r.Header.Set("X-Tenant-Id", tenantID)
+		}
+		if principalID != "" {
+			r.Header.Set("X-Principal-Id", principalID)
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
