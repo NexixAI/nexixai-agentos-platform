@@ -18,11 +18,12 @@ import (
 type Server struct {
 	version string
 
-	registry *Registry
-	forward  *Forwarder
-	proxy    *SSEProxy
-	index    *forwardIndex
-	events   *eventStore
+	registry    *Registry
+	forward     *Forwarder
+	proxy       *SSEProxy
+	index       *forwardIndex
+	events      *eventStore
+	jwtVerifier *JWTVerifier
 
 	audit audit.Logger
 }
@@ -34,13 +35,14 @@ func New(version string) *Server {
 		idxPath = "data/federation/forward-index.json"
 	}
 	return &Server{
-		version:  version,
-		registry: reg,
-		forward:  NewForwarder(),
-		proxy:    NewSSEProxy(),
-		index:    newForwardIndexPersistent(idxPath),
-		events:   newEventStore(),
-		audit:    audit.NewFromEnv(),
+		version:     version,
+		registry:    reg,
+		forward:     NewForwarder(),
+		proxy:       NewSSEProxy(),
+		index:       newForwardIndexPersistent(idxPath),
+		events:      newEventStore(),
+		audit:       audit.NewFromEnv(),
+		jwtVerifier: NewJWTVerifier(),
 	}
 }
 
@@ -57,6 +59,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("/metrics", middleware.ProtectMetrics(metrics.Handler()))
 
 	h := middleware.WithAuth(mux)
+	h = JWTMiddleware(s.jwtVerifier, h) // Add JWT verification
 	h = middleware.EnsureRequestID(h)
 	h = metrics.Instrument("federation", h)
 	return h

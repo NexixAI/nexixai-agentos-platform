@@ -2,6 +2,8 @@ package federation
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -31,11 +33,56 @@ func NewForwarder() *Forwarder {
 		}
 	}
 
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	// Configure mTLS if certs are provided
+	tlsConfig := loadMTLSClientConfig()
+	if tlsConfig != nil {
+		client.Transport = &http.Transport{TLSClientConfig: tlsConfig}
+	}
+
 	return &Forwarder{
-		Client:      &http.Client{Timeout: 10 * time.Second},
+		Client:      client,
 		MaxAttempts: maxAttempts,
 		BaseBackoff: baseBackoff,
 	}
+}
+
+// loadMTLSClientConfig loads mTLS client configuration from environment.
+// Returns nil if certs not configured (dev mode fallback to plain HTTP).
+func loadMTLSClientConfig() *tls.Config {
+	clientCertPath := strings.TrimSpace(os.Getenv("AGENTOS_FED_CLIENT_CERT"))
+	clientKeyPath := strings.TrimSpace(os.Getenv("AGENTOS_FED_CLIENT_KEY"))
+	caCertPath := strings.TrimSpace(os.Getenv("AGENTOS_FED_CA_CERT"))
+
+	// If no certs configured, fall back to HTTP (dev mode)
+	if clientCertPath == "" || clientKeyPath == "" {
+		return nil
+	}
+
+	// Load client cert/key pair
+	clientCert, err := tls.LoadX509KeyPair(clientCertPath, clientKeyPath)
+	if err != nil {
+		return nil
+	}
+
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{clientCert},
+		MinVersion:   tls.VersionTLS12,
+	}
+
+	// Load CA cert for server verification if provided
+	if caCertPath != "" {
+		caCert, err := os.ReadFile(caCertPath)
+		if err == nil {
+			caCertPool := x509.NewCertPool()
+			if caCertPool.AppendCertsFromPEM(caCert) {
+				tlsConfig.RootCAs = caCertPool
+			}
+		}
+	}
+
+	return tlsConfig
 }
 
 // ForwardRun calls the remote Agent Orchestrator Run Create endpoint and returns (remote_run_id, remote_events_url, status).
